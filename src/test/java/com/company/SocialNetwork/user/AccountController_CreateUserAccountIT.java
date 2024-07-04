@@ -24,8 +24,6 @@ import static org.testcontainers.shaded.org.apache.commons.lang3.RandomStringUti
 @AutoConfigureMockMvc
 public class AccountController_CreateUserAccountIT {
 
-    private final String strongPassword = "Strong@password1";
-    private final String validEmail = "email@email";
     @Autowired
     private MockMvc mockMvc;
 
@@ -36,8 +34,8 @@ public class AccountController_CreateUserAccountIT {
     }
 
     @ParameterizedTest
-    @MethodSource("provideInvalidUserAccountRequest")
-    public void givenInvalidFieldInRequest_shouldReturnUnprocessableEntity(InvalidCreateUserAccountRequestDTO request) throws Exception {
+    @MethodSource("provideInvalidCreateUserAccountRequest")
+    public void givenInvalidFieldInRequest_shouldReturnUnprocessableEntity(CreateUserAccountValidationRequest request) throws Exception {
         mockMvc.perform(post(CREATE_USER_ACCOUNT_PATH)
                         .content(asJsonString(request.getRequestDTO()))
                         .contentType(MediaType.APPLICATION_JSON))
@@ -45,19 +43,17 @@ public class AccountController_CreateUserAccountIT {
                 .andExpect(jsonPath("$.messages").value(hasItems(request.getExpectedMessages())));
     }
 
-    @Test
-    public void givenStrongPassword_shouldReturnCreated() throws Exception {
+    @ParameterizedTest
+    @MethodSource("provideValidUserAccountRequest")
+    public void givenValidRequest_shouldReturnCreated(CreateUserAccountValidationRequest request) throws Exception {
         mockMvc.perform(post(CREATE_USER_ACCOUNT_PATH)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(asJsonString(CreateUserAccountRequestModel.builder()
-                                .username("username")
-                                .email(validEmail)
-                                .password(strongPassword)
-                                .profileName("profileName").build())))
-                .andExpect(status().isCreated());
+                        .content(asJsonString(request.getRequestDTO())))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$").doesNotExist());
     }
 
-    static Stream<InvalidCreateUserAccountRequestDTO> provideInvalidUserAccountRequest() {
+    static Stream<CreateUserAccountValidationRequest> provideInvalidCreateUserAccountRequest() {
         //username
         var nullUsername = CreateUserAccountRequestModel.builder().username(null).build();
         var smallUsername = CreateUserAccountRequestModel.builder().username(randomAlphanumeric(2)).build();
@@ -84,32 +80,54 @@ public class AccountController_CreateUserAccountIT {
         var blankProfileName = CreateUserAccountRequestModel.builder().profileName("").build();
         var smallProfileName = CreateUserAccountRequestModel.builder().profileName(randomAlphabetic(1)).build();
         var bigProfileName = CreateUserAccountRequestModel.builder().profileName(randomAlphabetic(41)).build();
+        var xssAttackProfileName = CreateUserAccountRequestModel.builder().profileName("<script>alert('XSS')</script>").build();
 
         return Stream.of(
-                InvalidCreateUserAccountRequestDTO.of(nullUsername, "username: must not be blank")
-                , InvalidCreateUserAccountRequestDTO.of(smallUsername, "username: size must be between 3 and 40")
-                , InvalidCreateUserAccountRequestDTO.of(bigUsername, "username: size must be between 3 and 40")
-                , InvalidCreateUserAccountRequestDTO.of(invalidFormatUsername1, "username: invalid format. It should contain only alphanumeric characters, underscore and hyphens")
-                , InvalidCreateUserAccountRequestDTO.of(invalidFormatUsername2, "username: invalid format. It should contain only alphanumeric characters, underscore and hyphens")
-                , InvalidCreateUserAccountRequestDTO.of(invalidFormatUsername3, "username: invalid format. It should contain only alphanumeric characters, underscore and hyphens")
-                , InvalidCreateUserAccountRequestDTO.of(invalidFormatUsername4, "username: invalid format. It should contain only alphanumeric characters, underscore and hyphens")
-                , InvalidCreateUserAccountRequestDTO.of(nullEmail, "email: must not be blank")
-                , InvalidCreateUserAccountRequestDTO.of(bigEmail, "email: size must be between 5 and 255")
-                , InvalidCreateUserAccountRequestDTO.of(invalidEmail1, "email: must be a well-formed email address")
-                , InvalidCreateUserAccountRequestDTO.of(invalidEmail2, "email: must be a well-formed email address")
-                , InvalidCreateUserAccountRequestDTO.of(invalidEmail3, "email: must be a well-formed email address")
-                , InvalidCreateUserAccountRequestDTO.of(nullPassword, "password: must not be blank")
-                , InvalidCreateUserAccountRequestDTO.of(blankPassword, "password: must not be blank")
-                , InvalidCreateUserAccountRequestDTO.of(smallPassword, "password: size must be between 8 and 60")
-                , InvalidCreateUserAccountRequestDTO.of(bigPassword, "password: size must be between 8 and 60")
-                , InvalidCreateUserAccountRequestDTO.of(weakPassword1, "password: does not meet security requirements"
+                //username
+                CreateUserAccountValidationRequest.of(nullUsername, "username: must not be blank")
+                , CreateUserAccountValidationRequest.of(smallUsername, "username: size must be between 3 and 40")
+                , CreateUserAccountValidationRequest.of(bigUsername, "username: size must be between 3 and 40")
+                , CreateUserAccountValidationRequest.of(invalidFormatUsername1, "username: invalid format. It should contain only alphanumeric characters, spaces, underscore and hyphens")
+                , CreateUserAccountValidationRequest.of(invalidFormatUsername2, "username: invalid format. It should contain only alphanumeric characters, spaces, underscore and hyphens")
+                , CreateUserAccountValidationRequest.of(invalidFormatUsername3, "username: invalid format. It should contain only alphanumeric characters, spaces, underscore and hyphens")
+                , CreateUserAccountValidationRequest.of(invalidFormatUsername4, "username: invalid format. It should contain only alphanumeric characters, spaces, underscore and hyphens")
+                //email
+                , CreateUserAccountValidationRequest.of(nullEmail, "email: must not be blank")
+                , CreateUserAccountValidationRequest.of(bigEmail, "email: size must be between 5 and 255")
+                , CreateUserAccountValidationRequest.of(invalidEmail1, "email: must be a well-formed email address")
+                , CreateUserAccountValidationRequest.of(invalidEmail2, "email: must be a well-formed email address")
+                , CreateUserAccountValidationRequest.of(invalidEmail3, "email: must be a well-formed email address")
+                //password
+                , CreateUserAccountValidationRequest.of(nullPassword, "password: must not be blank")
+                , CreateUserAccountValidationRequest.of(blankPassword, "password: must not be blank")
+                , CreateUserAccountValidationRequest.of(smallPassword, "password: size must be between 8 and 60")
+                , CreateUserAccountValidationRequest.of(bigPassword, "password: size must be between 8 and 60")
+                , CreateUserAccountValidationRequest.of(weakPassword1, "password: does not meet security requirements"
                         , "password: should have at least one lowercase letter"
                         , "password: should have at least one uppercase letter"
                         , "password: should have at least one special character")
-                , InvalidCreateUserAccountRequestDTO.of(nullProfileName, "profileName: must not be blank")
-                , InvalidCreateUserAccountRequestDTO.of(blankProfileName, "profileName: must not be blank")
-                , InvalidCreateUserAccountRequestDTO.of(smallProfileName, "profileName: size must be between 2 and 40")
-                , InvalidCreateUserAccountRequestDTO.of(bigProfileName, "profileName: size must be between 2 and 40")
+                //profileName
+                , CreateUserAccountValidationRequest.of(nullProfileName, "profileName: must not be blank")
+                , CreateUserAccountValidationRequest.of(blankProfileName, "profileName: must not be blank")
+                , CreateUserAccountValidationRequest.of(smallProfileName, "profileName: size must be between 2 and 40")
+                , CreateUserAccountValidationRequest.of(bigProfileName, "profileName: size must be between 2 and 40")
+                , CreateUserAccountValidationRequest.of(xssAttackProfileName, "profileName: invalid format. It should contain only alphanumeric characters, spaces, underscore and hyphens")
+        );
+    }
+
+    static Stream<CreateUserAccountValidationRequest> provideValidUserAccountRequest() {
+        final String strongPassword1 = "Strong@password1";
+        final String strongPassword2 = "St@word1";
+        final String validEmail1 = "email@email";
+        final String validEmail2 = "a@b.c";
+        final String validUsername2 = "User_name-1";
+        final String validProfileName3 = "Valid-Profile_Name da Silva";
+
+        var validUsernameModel1 = CreateUserAccountRequestModel.builder().username(validUsername2).password(strongPassword1).email(validEmail1).profileName(validProfileName3).build();
+        var validUsernameModel2 = CreateUserAccountRequestModel.builder().username(validUsername2).password(strongPassword2).email(validEmail2).profileName(validProfileName3).build();
+        return Stream.of(
+                CreateUserAccountValidationRequest.of(validUsernameModel1)
+                , CreateUserAccountValidationRequest.of(validUsernameModel2)
         );
     }
 }

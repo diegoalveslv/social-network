@@ -5,12 +5,12 @@ import lombok.Data;
 
 @Data
 @Builder
-public class InvalidCreateUserAccountRequestDTO {
+public class CreateUserAccountValidationRequest {
     private CreateUserAccountRequestModel requestDTO;
     private String[] expectedMessages;
 
-    public static InvalidCreateUserAccountRequestDTO of(CreateUserAccountRequestModel requestDTO, String... expectedMessage) {
-        return InvalidCreateUserAccountRequestDTO.builder()
+    public static CreateUserAccountValidationRequest of(CreateUserAccountRequestModel requestDTO, String... expectedMessage) {
+        return CreateUserAccountValidationRequest.builder()
                 .requestDTO(requestDTO)
                 .expectedMessages(expectedMessage)
                 .build();

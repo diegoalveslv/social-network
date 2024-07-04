@@ -1,7 +1,7 @@
 package com.company.SocialNetwork.user;
 
+import com.company.SocialNetwork.user.validation.SafeText;
 import com.company.SocialNetwork.user.validation.ValidPassword;
-import com.company.SocialNetwork.user.validation.ValidUsername;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
@@ -18,11 +18,12 @@ public class CreateUserAccountRequestDTO {
 
     @NotBlank
     @Size(min = 2, max = 40)
+    @SafeText
     private String profileName;
 
     @NotBlank
     @Size(min = 3, max = 40)
-    @ValidUsername
+    @SafeText
     private String username;
 
     @NotBlank

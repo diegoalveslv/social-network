@@ -10,9 +10,9 @@ import java.lang.annotation.Target;
 
 @Target({ElementType.FIELD, ElementType.METHOD, ElementType.PARAMETER, ElementType.ANNOTATION_TYPE})
 @Retention(RetentionPolicy.RUNTIME)
-@Constraint(validatedBy = UsernameValidator.class)
-public @interface ValidUsername {
-    String message() default "Invalid username";
+@Constraint(validatedBy = SafeTextFormValidator.class)
+public @interface SafeText {
+    String message() default "Invalid text format";
 
     Class<?>[] groups() default {};
 
