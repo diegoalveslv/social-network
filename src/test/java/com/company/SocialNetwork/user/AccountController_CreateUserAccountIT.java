@@ -17,7 +17,9 @@ import static com.company.SocialNetwork.TestUtils.extractMessagesFromBody;
 import static com.company.SocialNetwork.user.AccountController.CREATE_USER_ACCOUNT_PATH;
 import static com.company.SocialNetwork.utils.JsonUtils.asJsonString;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hamcrest.Matchers.contains;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.testcontainers.shaded.org.apache.commons.lang3.RandomStringUtils.randomAlphabetic;
 import static org.testcontainers.shaded.org.apache.commons.lang3.RandomStringUtils.randomAlphanumeric;
@@ -28,6 +30,56 @@ public class AccountController_CreateUserAccountIT {
 
     @Autowired
     private MockMvc mockMvc;
+
+    @Test
+    public void givenBodyIsEmpty_shouldReturnBadRequest() throws Exception {
+        mockMvc.perform(post(CREATE_USER_ACCOUNT_PATH))
+                .andExpect(status().isBadRequest());
+    }
+
+    @ParameterizedTest
+    @MethodSource("provideInvalidUserAccountRequest")
+    public void givenInvalidRequest_shouldReturnBadRequest(InvalidCreateUserAccountRequestDTO request) throws Exception {
+        MvcResult mvcResult = mockMvc.perform(post(CREATE_USER_ACCOUNT_PATH)
+                        .content(asJsonString(request.getRequestDTO()))
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isBadRequest())
+                .andReturn();
+
+        String contentAsString = mvcResult.getResponse().getContentAsString();
+        List<String> messages = extractMessagesFromBody(contentAsString);
+        assertThat(messages).containsAnyOf(request.getExpectedMessage());
+    }
+
+    @Test
+    public void givenWeakPassword_shouldReturnUnprocessableEntity() throws Exception {
+        mockMvc.perform(post(CREATE_USER_ACCOUNT_PATH)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(asJsonString(CreateUserAccountRequestModel.builder()
+                                .username("username")
+                                .email("email@email")
+                                .password("weakpass")
+                                .profileName("profileName")
+                                .build())))
+                .andExpect(status().isUnprocessableEntity())
+                .andExpect(jsonPath("$.messages").value(contains("password: does not meet security requirements"
+                        , "Should have at least one lowercase letter"
+                        , "Should have at least one uppercase letter"
+                        , "Should have at least one special character"
+                )));
+    }
+
+    @Test
+    public void givenStrongPassword_shouldReturnCreated() throws Exception {
+        mockMvc.perform(post(CREATE_USER_ACCOUNT_PATH)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(asJsonString(CreateUserAccountRequestModel.builder()
+                                .username("username")
+                                .email("email@email")
+                                .password("Strong@password1")
+                                .profileName("profileName").build())))
+                .andExpect(status().isCreated());
+    }
 
     static Stream<InvalidCreateUserAccountRequestDTO> provideInvalidUserAccountRequest() {
         var nullUsername = CreateUserAccountRequestModel.builder().username(null).build();
@@ -64,26 +116,5 @@ public class AccountController_CreateUserAccountIT {
                 , InvalidCreateUserAccountRequestDTO.of(smallProfileName, "profileName: size must be between 2 and 40")
                 , InvalidCreateUserAccountRequestDTO.of(bigProfileName, "profileName: size must be between 2 and 40")
         );
-
-    }
-
-    @Test
-    public void givenBodyIsEmpty_whenCreateUserAccount_thenReturnBadRequest() throws Exception {
-        mockMvc.perform(post(CREATE_USER_ACCOUNT_PATH))
-                .andExpect(status().isBadRequest());
-    }
-
-    @ParameterizedTest
-    @MethodSource("provideInvalidUserAccountRequest")
-    public void givenInvalidRequest_whenCreateUserAccount_thenReturnBadRequest(InvalidCreateUserAccountRequestDTO request) throws Exception {
-        MvcResult mvcResult = mockMvc.perform(post(CREATE_USER_ACCOUNT_PATH)
-                        .content(asJsonString(request.getRequestDTO()))
-                        .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isBadRequest())
-                .andReturn();
-
-        String contentAsString = mvcResult.getResponse().getContentAsString();
-        List<String> messages = extractMessagesFromBody(contentAsString);
-        assertThat(messages).containsAnyOf(request.getExpectedMessage());
     }
 }

@@ -12,6 +12,7 @@ import java.util.List;
 
 import static java.lang.String.format;
 import static org.springframework.http.HttpStatus.BAD_REQUEST;
+import static org.springframework.http.HttpStatus.UNPROCESSABLE_ENTITY;
 
 @ControllerAdvice
 public class CustomExceptionHandler {
@@ -29,5 +30,13 @@ public class CustomExceptionHandler {
         var errorResponse = new CustomErrorResponse(BAD_REQUEST.value(), messages);
 
         return new ResponseEntity<>(errorResponse, BAD_REQUEST);
+    }
+
+    @ExceptionHandler(UnprocessableEntityException.class)
+    @ResponseStatus(UNPROCESSABLE_ENTITY)
+    public ResponseEntity<CustomErrorResponse> handleUnprocessableEntityExceptions(UnprocessableEntityException ex) {
+        var response = new CustomErrorResponse(UNPROCESSABLE_ENTITY.value(), ex.getMessages());
+
+        return new ResponseEntity<>(response, UNPROCESSABLE_ENTITY);
     }
 }
