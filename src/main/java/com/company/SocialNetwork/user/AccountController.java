@@ -3,7 +3,6 @@ package com.company.SocialNetwork.user;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
@@ -17,7 +16,7 @@ public class AccountController {
     private final AccountService accountService;
 
     @PostMapping(CREATE_USER_ACCOUNT_PATH)
-    public ResponseEntity<Void> createUserAccount(@Validated @RequestBody CreateUserAccountRequestDTO createUserAccountRequest) {
+    public ResponseEntity<Void> createUserAccount(@RequestBody CreateUserAccountRequestDTO createUserAccountRequest) {
 
         accountService.createUserAccount(createUserAccountRequest);
 
