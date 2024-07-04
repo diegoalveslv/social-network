@@ -6,7 +6,7 @@ import jakarta.validation.ConstraintValidatorContext;
 import java.util.List;
 import java.util.regex.Pattern;
 
-import static org.apache.commons.lang3.StringUtils.isNotBlank;
+import static org.apache.commons.lang3.StringUtils.isBlank;
 
 
 public class PasswordValidator implements ConstraintValidator<ValidPassword, String> {
@@ -19,7 +19,7 @@ public class PasswordValidator implements ConstraintValidator<ValidPassword, Str
 
     @Override
     public boolean isValid(String value, ConstraintValidatorContext context) {
-        if (isNotBlank(value) && !passwordRegex.matcher(value).matches()) {
+        if (isBlank(value) || !passwordRegex.matcher(value).matches()) {
             context.disableDefaultConstraintViolation();
             List.of("does not meet security requirements"
                     , "should have at least one lowercase letter"
