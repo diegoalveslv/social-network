@@ -17,7 +17,7 @@ import static com.company.SocialNetwork.TestUtils.extractMessagesFromBody;
 import static com.company.SocialNetwork.user.AccountController.CREATE_USER_ACCOUNT_PATH;
 import static com.company.SocialNetwork.utils.JsonUtils.asJsonString;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.hamcrest.Matchers.contains;
+import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -62,10 +62,10 @@ public class AccountController_CreateUserAccountIT {
                                 .profileName("profileName")
                                 .build())))
                 .andExpect(status().isUnprocessableEntity())
-                .andExpect(jsonPath("$.messages").value(contains("password: does not meet security requirements"
-                        , "Should have at least one lowercase letter"
-                        , "Should have at least one uppercase letter"
-                        , "Should have at least one special character"
+                .andExpect(jsonPath("$.messages").value(containsInAnyOrder("password: does not meet security requirements"
+                        , "password: should have at least one lowercase letter"
+                        , "password: should have at least one uppercase letter"
+                        , "password: should have at least one special character"
                 )));
     }
 
