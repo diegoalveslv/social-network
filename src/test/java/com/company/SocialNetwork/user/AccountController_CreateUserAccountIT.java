@@ -39,11 +39,11 @@ public class AccountController_CreateUserAccountIT {
 
     @ParameterizedTest
     @MethodSource("provideInvalidUserAccountRequest")
-    public void givenInvalidRequest_shouldReturnBadRequest(InvalidCreateUserAccountRequestDTO request) throws Exception {
+    public void givenInvalidFieldInRequest_shouldReturnUnprocessableEntity(InvalidCreateUserAccountRequestDTO request) throws Exception {
         MvcResult mvcResult = mockMvc.perform(post(CREATE_USER_ACCOUNT_PATH)
                         .content(asJsonString(request.getRequestDTO()))
                         .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isBadRequest())
+                .andExpect(status().isUnprocessableEntity())
                 .andReturn();
 
         String contentAsString = mvcResult.getResponse().getContentAsString();

@@ -6,13 +6,12 @@ import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
-import org.springframework.web.bind.annotation.ResponseStatus;
 
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
 import static java.lang.String.format;
-import static org.springframework.http.HttpStatus.BAD_REQUEST;
 import static org.springframework.http.HttpStatus.UNPROCESSABLE_ENTITY;
 
 @ControllerAdvice
@@ -20,7 +19,6 @@ import static org.springframework.http.HttpStatus.UNPROCESSABLE_ENTITY;
 public class CustomExceptionHandler {
 
     @ExceptionHandler({MethodArgumentNotValidException.class, jakarta.validation.ConstraintViolationException.class})
-    @ResponseStatus(BAD_REQUEST)
     public ResponseEntity<CustomErrorResponse> handleValidationExceptions(Exception ex) {
 
         List<String> messages = new ArrayList<>();
@@ -43,15 +41,14 @@ public class CustomExceptionHandler {
             throw invalidExceptionTypeEx;
         }
 
-        var errorResponse = new CustomErrorResponse(BAD_REQUEST.value(), messages);
+        var errorResponse = new CustomErrorResponse(UNPROCESSABLE_ENTITY.value(), ZonedDateTime.now(), messages);
 
-        return new ResponseEntity<>(errorResponse, BAD_REQUEST);
+        return new ResponseEntity<>(errorResponse, UNPROCESSABLE_ENTITY);
     }
 
     @ExceptionHandler(UnprocessableEntityException.class)
-    @ResponseStatus(UNPROCESSABLE_ENTITY)
     public ResponseEntity<CustomErrorResponse> handleUnprocessableEntityExceptions(UnprocessableEntityException ex) {
-        var response = new CustomErrorResponse(UNPROCESSABLE_ENTITY.value(), ex.getMessages());
+        var response = new CustomErrorResponse(UNPROCESSABLE_ENTITY.value(), ZonedDateTime.now(), ex.getMessages());
 
         return new ResponseEntity<>(response, UNPROCESSABLE_ENTITY);
     }
