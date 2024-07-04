@@ -1,4 +1,4 @@
-package com.company.SocialNetwork.user.validation;
+package com.company.SocialNetwork.useraccount.validation;
 
 import jakarta.validation.ConstraintValidator;
 import jakarta.validation.ConstraintValidatorContext;

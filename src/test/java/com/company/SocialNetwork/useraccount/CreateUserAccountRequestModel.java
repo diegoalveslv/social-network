@@ -1,4 +1,4 @@
-package com.company.SocialNetwork.user;
+package com.company.SocialNetwork.useraccount;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;

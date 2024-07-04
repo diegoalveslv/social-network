@@ -1,4 +1,4 @@
-package com.company.SocialNetwork.user.validation;
+package com.company.SocialNetwork.useraccount.validation;
 
 import jakarta.validation.Constraint;
 import jakarta.validation.Payload;
@@ -10,9 +10,9 @@ import java.lang.annotation.Target;
 
 @Target({ElementType.FIELD, ElementType.METHOD, ElementType.PARAMETER, ElementType.ANNOTATION_TYPE})
 @Retention(RetentionPolicy.RUNTIME)
-@Constraint(validatedBy = PasswordValidator.class)
-public @interface ValidPassword {
-    String message() default "Invalid password";
+@Constraint(validatedBy = SafeTextFormValidator.class)
+public @interface SafeText {
+    String message() default "Invalid text format";
 
     Class<?>[] groups() default {};
 

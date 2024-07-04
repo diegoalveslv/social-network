@@ -1,31 +1,42 @@
-package com.company.SocialNetwork.user;
+package com.company.SocialNetwork.useraccount;
 
+import com.company.SocialNetwork.TestcontainersConfiguration;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.NoResultException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
+import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.util.stream.Stream;
 
-import static com.company.SocialNetwork.user.AccountController.CREATE_USER_ACCOUNT_PATH;
+import static com.company.SocialNetwork.useraccount.UserAccountController.CREATE_USER_ACCOUNT_PATH;
 import static com.company.SocialNetwork.utils.JsonUtils.asJsonString;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Fail.fail;
 import static org.hamcrest.Matchers.hasItems;
+import static org.hamcrest.Matchers.matchesPattern;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 import static org.testcontainers.shaded.org.apache.commons.lang3.RandomStringUtils.randomAlphabetic;
 import static org.testcontainers.shaded.org.apache.commons.lang3.RandomStringUtils.randomAlphanumeric;
 
 @SpringBootTest
 @AutoConfigureMockMvc
-public class AccountController_CreateUserAccountIT {
+@Import(TestcontainersConfiguration.class)
+public class AccountController_CreateUserUserAccountIT {
 
     @Autowired
     private MockMvc mockMvc;
+
+    @Autowired
+    private EntityManager entityManager;
 
     @Test
     public void givenBodyIsEmpty_shouldReturnBadRequest() throws Exception {
@@ -45,12 +56,49 @@ public class AccountController_CreateUserAccountIT {
 
     @ParameterizedTest
     @MethodSource("provideValidUserAccountRequest")
+    @Sql(scripts = "classpath:db-scripts/cleanUp.sql", executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD)
     public void givenValidRequest_shouldReturnCreated(CreateUserAccountValidationRequest request) throws Exception {
-        mockMvc.perform(post(CREATE_USER_ACCOUNT_PATH)
+        var result = mockMvc.perform(post(CREATE_USER_ACCOUNT_PATH)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(asJsonString(request.getRequestDTO())))
                 .andExpect(status().isCreated())
-                .andExpect(jsonPath("$").doesNotExist());
+                .andExpect(jsonPath("$").doesNotExist())
+                .andExpect(header().exists("location"))
+                .andExpect(header().string("location", matchesPattern("http://localhost/users/\\w{12}")))
+                .andReturn();
+
+        String location = result.getResponse().getHeader("location");
+        assertThat(location).isNotNull();
+
+        String slug = getSlugFromLocation(location);
+        shouldExistInDatabase(slug);
+
+        var userAccount = findUserAccountBySlug(slug);
+        shouldHaveEncryptedPassword(request.getRequestDTO().getPassword(), userAccount.getPassword());
+    }
+
+    private void shouldHaveEncryptedPassword(String requestPassword, String savedPassword) {
+        assertThat(savedPassword).isNotEqualTo(requestPassword);
+    }
+
+    private void shouldExistInDatabase(String slug) {
+        try {
+            var result = findUserAccountBySlug(slug);
+            assertThat(result).isNotNull();
+        } catch (NoResultException e) {
+            fail("Slug " + slug + " not found in database");
+        }
+    }
+
+    private static String getSlugFromLocation(String location) {
+        String[] split = location.split("/");
+        return split[split.length - 1];
+    }
+
+    private UserAccount findUserAccountBySlug(String slug) {
+        return entityManager.createQuery("SELECT u FROM UserAccount u WHERE u.slug = :slug", UserAccount.class)
+                .setParameter("slug", slug)
+                .getSingleResult();
     }
 
     static Stream<CreateUserAccountValidationRequest> provideInvalidCreateUserAccountRequest() {
@@ -120,11 +168,13 @@ public class AccountController_CreateUserAccountIT {
         final String strongPassword2 = "St@word1";
         final String validEmail1 = "email@email";
         final String validEmail2 = "a@b.c";
-        final String validUsername2 = "User_name-1";
-        final String validProfileName3 = "Valid-Profile_Name da Silva";
+        final String validUsername1 = "User _name-1";
+        final String validUsername2 = "User_name-2";
+        final String validProfileName1 = "Valid-Profile_Name da Silva";
+        final String validProfileName2 = "Valid -Profile_Name da Silva";
 
-        var validUsernameModel1 = CreateUserAccountRequestModel.builder().username(validUsername2).password(strongPassword1).email(validEmail1).profileName(validProfileName3).build();
-        var validUsernameModel2 = CreateUserAccountRequestModel.builder().username(validUsername2).password(strongPassword2).email(validEmail2).profileName(validProfileName3).build();
+        var validUsernameModel1 = CreateUserAccountRequestModel.builder().username(validUsername1).password(strongPassword1).email(validEmail1).profileName(validProfileName1).build();
+        var validUsernameModel2 = CreateUserAccountRequestModel.builder().username(validUsername2).password(strongPassword2).email(validEmail2).profileName(validProfileName2).build();
         return Stream.of(
                 CreateUserAccountValidationRequest.of(validUsernameModel1)
                 , CreateUserAccountValidationRequest.of(validUsernameModel2)

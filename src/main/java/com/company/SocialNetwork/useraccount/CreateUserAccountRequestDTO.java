@@ -1,7 +1,7 @@
-package com.company.SocialNetwork.user;
+package com.company.SocialNetwork.useraccount;
 
-import com.company.SocialNetwork.user.validation.SafeText;
-import com.company.SocialNetwork.user.validation.ValidPassword;
+import com.company.SocialNetwork.useraccount.validation.SafeText;
+import com.company.SocialNetwork.useraccount.validation.ValidPassword;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
