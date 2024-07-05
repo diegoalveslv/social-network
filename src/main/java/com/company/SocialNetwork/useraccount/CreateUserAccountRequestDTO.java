@@ -14,6 +14,8 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
+//TODO use SizeTrimmed
+//TODO use NotBlankTrimmed
 public class CreateUserAccountRequestDTO {
 
     @NotBlank

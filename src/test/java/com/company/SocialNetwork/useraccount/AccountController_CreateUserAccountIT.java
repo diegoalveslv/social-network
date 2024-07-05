@@ -30,7 +30,7 @@ import static org.testcontainers.shaded.org.apache.commons.lang3.RandomStringUti
 @SpringBootTest
 @AutoConfigureMockMvc
 @Import(TestcontainersConfiguration.class)
-public class AccountController_CreateUserUserAccountIT {
+public class AccountController_CreateUserAccountIT {
 
     @Autowired
     private MockMvc mockMvc;
@@ -76,6 +76,8 @@ public class AccountController_CreateUserUserAccountIT {
         var userAccount = findUserAccountBySlug(slug);
         shouldHaveEncryptedPassword(request.getRequestDTO().getPassword(), userAccount.getPassword());
     }
+
+    //TODO test scenarios where duplication occurs
 
     private void shouldHaveEncryptedPassword(String requestPassword, String savedPassword) {
         assertThat(savedPassword).isNotEqualTo(requestPassword);
