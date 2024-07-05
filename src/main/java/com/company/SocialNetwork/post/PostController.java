@@ -1,23 +1,33 @@
 package com.company.SocialNetwork.post;
 
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
+
+import java.net.URI;
 
 @RestController
 @RequiredArgsConstructor
 public class PostController {
 
+    public static final String CREATE_POST_PATH = "/posts";
+
     private final PostService postService;
 
-    @PostMapping("/posts")
+    @PostMapping(CREATE_POST_PATH)
     public ResponseEntity<?> createPost(@RequestBody CreatePostRequestDTO requestData) {
 
-        postService.createPost(requestData);
+        String postSlug = postService.createPost(requestData);
 
-        return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+        URI location = ServletUriComponentsBuilder
+                .fromCurrentRequest()
+                .path("/{slug}")
+                .buildAndExpand(postSlug)
+                .toUri();
+
+        return ResponseEntity.created(location).build();
     }
 }

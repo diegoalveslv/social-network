@@ -75,9 +75,14 @@ public class AccountController_CreateUserAccountIT {
 
         var userAccount = findUserAccountBySlug(slug);
         shouldHaveEncryptedPassword(request.getRequestDTO().getPassword(), userAccount.getPassword());
+        shouldHaveSetCreatedDate(userAccount);
     }
 
     //TODO test scenarios where duplication occurs
+
+    private void shouldHaveSetCreatedDate(UserAccount userAccount) {
+        assertThat(userAccount.getCreatedAt()).isNotNull();
+    }
 
     private void shouldHaveEncryptedPassword(String requestPassword, String savedPassword) {
         assertThat(savedPassword).isNotEqualTo(requestPassword);
