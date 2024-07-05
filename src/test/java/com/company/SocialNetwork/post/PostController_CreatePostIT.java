@@ -44,6 +44,18 @@ class PostController_CreatePostIT {
                 .andExpect(jsonPath("$.messages").value(hasItems(request.getExpectedMessages())));
     }
 
+    @Test
+    public void givenUserSlugDoesNotExist_shouldReturnUnprocessableEntity() throws Exception {
+        mockMvc.perform(post("/posts")
+                        .content(asJsonString(CreatePostRequestModel.builder()
+                                .text("text")
+                                .userSlug("slugnotexist")
+                                .build()))
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isUnprocessableEntity())
+                .andExpect(jsonPath("$.messages[0]").value("userSlug: user not found"));
+    }
+
     static Stream<CreatePostValidationRequest> provideInvalidCreatePostRequest() {
         //text
         var nullText = CreatePostRequestModel.builder().text(null).build();
@@ -53,6 +65,15 @@ class PostController_CreatePostIT {
         var notTrimmedText = CreatePostRequestModel.builder().text("     ").build();
         var notTrimmedText2 = CreatePostRequestModel.builder().text("  a  ").build();
         var xssAttackText = CreatePostRequestModel.builder().text("<script>alert('XSS')</script>").build();
+
+        //userSlug
+        var nullUserSlug = CreatePostRequestModel.builder().userSlug(null).build();
+        var emptyUserSlug = CreatePostRequestModel.builder().userSlug("").build();
+        var smallUserSlug = CreatePostRequestModel.builder().userSlug(randomAlphanumeric(11)).build();
+        var bigUserSlug = CreatePostRequestModel.builder().userSlug(randomAlphanumeric(13)).build();
+        var notTrimmedUserSlug = CreatePostRequestModel.builder().userSlug("            ").build();
+        var notTrimmedUserSlug2 = CreatePostRequestModel.builder().userSlug("      e     ").build();
+
         return Stream.of(
                 //text
                 CreatePostValidationRequest.of(nullText, "text: must not be blank")
@@ -62,6 +83,13 @@ class PostController_CreatePostIT {
                 , CreatePostValidationRequest.of(notTrimmedText, "text: must not be blank")
                 , CreatePostValidationRequest.of(notTrimmedText2, "text: invalid size for trimmed text")
                 , CreatePostValidationRequest.of(xssAttackText, "text: invalid format. It should contain only alphanumeric characters, spaces, underscore and hyphens")
+                //userSlug
+                , CreatePostValidationRequest.of(nullUserSlug, "userSlug: must not be blank")
+                , CreatePostValidationRequest.of(emptyUserSlug, "userSlug: must not be blank")
+                , CreatePostValidationRequest.of(smallUserSlug, "userSlug: size must be between 12 and 12")
+                , CreatePostValidationRequest.of(bigUserSlug, "userSlug: size must be between 12 and 12")
+                , CreatePostValidationRequest.of(notTrimmedUserSlug, "userSlug: must not be blank")
+                , CreatePostValidationRequest.of(notTrimmedUserSlug2, "userSlug: invalid size for trimmed text")
         );
     }
 }

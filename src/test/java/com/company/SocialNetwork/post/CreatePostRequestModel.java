@@ -11,5 +11,6 @@ import lombok.NoArgsConstructor;
 @Builder
 public class CreatePostRequestModel {
 
+    private String userSlug;
     private String text;
 }

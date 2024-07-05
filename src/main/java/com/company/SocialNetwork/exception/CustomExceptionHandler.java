@@ -18,7 +18,9 @@ import static org.springframework.http.HttpStatus.UNPROCESSABLE_ENTITY;
 @Slf4j
 public class CustomExceptionHandler {
 
-    @ExceptionHandler({MethodArgumentNotValidException.class, jakarta.validation.ConstraintViolationException.class})
+    @ExceptionHandler({MethodArgumentNotValidException.class
+            , jakarta.validation.ConstraintViolationException.class
+            , FieldValidationException.class})
     public ResponseEntity<CustomErrorResponse> handleValidationExceptions(Exception ex) {
 
         List<String> messages = new ArrayList<>();
@@ -35,6 +37,10 @@ public class CustomExceptionHandler {
                 String errorMessage = cv.getMessage();
                 messages.add(format("%s: %s", fieldName, errorMessage));
             });
+        } else if (ex instanceof FieldValidationException cfe) {
+            String fieldName = cfe.getFieldName();
+            String errorMessage = cfe.getErrorMessage();
+            messages.add(format("%s: %s", fieldName, errorMessage));
         } else {
             var invalidExceptionTypeEx = new RuntimeException("Invalid exception type.");
             log.error("Invalid exception type: " + ex.getClass().getName(), invalidExceptionTypeEx);
@@ -44,12 +50,5 @@ public class CustomExceptionHandler {
         var errorResponse = new CustomErrorResponse(UNPROCESSABLE_ENTITY.value(), ZonedDateTime.now(), messages);
 
         return new ResponseEntity<>(errorResponse, UNPROCESSABLE_ENTITY);
-    }
-
-    @ExceptionHandler(UnprocessableEntityException.class)
-    public ResponseEntity<CustomErrorResponse> handleUnprocessableEntityExceptions(UnprocessableEntityException ex) {
-        var response = new CustomErrorResponse(UNPROCESSABLE_ENTITY.value(), ZonedDateTime.now(), ex.getMessages());
-
-        return new ResponseEntity<>(response, UNPROCESSABLE_ENTITY);
     }
 }

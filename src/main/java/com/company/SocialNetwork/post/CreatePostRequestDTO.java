@@ -7,11 +7,18 @@ import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import lombok.experimental.FieldNameConstants;
 
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
+@FieldNameConstants
 public class CreatePostRequestDTO {
+
+    @NotBlankTrimmed
+    @Size(min = 12, max = 12)
+    @SizeTrimmed(min = 12, max = 12)
+    private String userSlug;
 
     @NotBlankTrimmed
     @Size(min = 2, max = 500)
