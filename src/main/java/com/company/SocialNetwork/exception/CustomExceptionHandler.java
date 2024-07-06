@@ -11,7 +11,6 @@ import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
-import static java.lang.String.format;
 import static org.springframework.http.HttpStatus.UNPROCESSABLE_ENTITY;
 
 @ControllerAdvice
@@ -28,19 +27,19 @@ public class CustomExceptionHandler {
             mae.getBindingResult().getAllErrors().forEach((error) -> {
                 String fieldName = ((FieldError) error).getField();
                 String errorMessage = error.getDefaultMessage();
-                messages.add(format("%s: %s", fieldName, errorMessage));
+                messages.add("%s: %s".formatted(fieldName, errorMessage));
             });
         } else if (ex instanceof jakarta.validation.ConstraintViolationException cve) {
             cve.getConstraintViolations().forEach((cv) -> {
                 String[] propertySlices = cv.getPropertyPath().toString().split("\\.");
                 String fieldName = propertySlices[propertySlices.length - 1];
                 String errorMessage = cv.getMessage();
-                messages.add(format("%s: %s", fieldName, errorMessage));
+                messages.add("%s: %s".formatted(fieldName, errorMessage));
             });
         } else if (ex instanceof FieldValidationException cfe) {
             String fieldName = cfe.getFieldName();
             String errorMessage = cfe.getErrorMessage();
-            messages.add(format("%s: %s", fieldName, errorMessage));
+            messages.add("%s: %s".formatted(fieldName, errorMessage));
         } else {
             var invalidExceptionTypeEx = new RuntimeException("Invalid exception type.");
             log.error("Invalid exception type: " + ex.getClass().getName(), invalidExceptionTypeEx);
