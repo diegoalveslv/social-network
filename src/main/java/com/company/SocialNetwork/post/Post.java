@@ -32,6 +32,9 @@ public class Post extends BaseEntity {
     @ManyToOne
     private UserAccount userAccount;
 
+    @ManyToOne
+    private Post commentToPost;
+
     @Column
     private ZonedDateTime createdAt;
 

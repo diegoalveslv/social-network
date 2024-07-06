@@ -11,6 +11,7 @@ import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
+import static org.springframework.http.HttpStatus.NOT_FOUND;
 import static org.springframework.http.HttpStatus.UNPROCESSABLE_ENTITY;
 
 @ControllerAdvice
@@ -49,5 +50,10 @@ public class CustomExceptionHandler {
         var errorResponse = new CustomErrorResponse(UNPROCESSABLE_ENTITY.value(), ZonedDateTime.now(), messages);
 
         return new ResponseEntity<>(errorResponse, UNPROCESSABLE_ENTITY);
+    }
+
+    @ExceptionHandler({NotFoundException.class})
+    public ResponseEntity<?> handleNotFoundException(NotFoundException ex) {
+        return new ResponseEntity<>(new CustomErrorResponse(NOT_FOUND.value(), ZonedDateTime.now(), List.of(ex.getMessage())), NOT_FOUND);
     }
 }
