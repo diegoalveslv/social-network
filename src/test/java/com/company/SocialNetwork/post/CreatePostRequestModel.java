@@ -12,5 +12,5 @@ import lombok.NoArgsConstructor;
 public class CreatePostRequestModel {
 
     private String userSlug;
-    private String text;
+    private String content;
 }

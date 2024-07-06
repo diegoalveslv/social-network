@@ -13,7 +13,7 @@ public class TestcontainersConfiguration {
 	@ServiceConnection
 	PostgreSQLContainer<?> postgresContainer() {
 		PostgreSQLContainer<?> container = new PostgreSQLContainer<>(DockerImageName.parse("postgres:16.3-alpine"));
-		container.withReuse(true); //TODO: this is possible because of the @Transactional in the testing classes, which is not a good practice
+		container.withReuse(true);
 
 		return container;
 	}

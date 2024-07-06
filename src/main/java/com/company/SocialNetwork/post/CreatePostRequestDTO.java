@@ -25,7 +25,6 @@ public class CreatePostRequestDTO {
     @SizeTrimmed(min = 2, max = 500)
     @SafeText
     //TODO in this case this could be less strict. Check if I can use the groups variable in the interface to change the strictness
-    //TODO rename this to content to match de entity
-    private String text;
+    private String content;
 
 }

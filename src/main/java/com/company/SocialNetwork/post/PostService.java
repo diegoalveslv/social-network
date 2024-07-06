@@ -29,7 +29,7 @@ public class PostService {
         var post = Post.builder()
                 .slug(slugGenerator.generateSlug())
                 .userAccount(user)
-                .content(requestData.getText())
+                .content(requestData.getContent())
                 .createdAt(ZonedDateTime.now())
                 .build();
 

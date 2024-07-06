@@ -63,7 +63,7 @@ class PostController_CreatePostIT {
     public void givenUserSlugDoesNotExist_shouldReturnUnprocessableEntity() throws Exception {
         mockMvc.perform(post(CREATE_POST_PATH)
                         .content(asJsonString(CreatePostRequestModel.builder()
-                                .text("text")
+                                .content("text")
                                 .userSlug("slugnotexist")
                                 .build()))
                         .contentType(MediaType.APPLICATION_JSON))
@@ -78,7 +78,7 @@ class PostController_CreatePostIT {
 
         var result = mockMvc.perform(post(CREATE_POST_PATH)
                         .content(asJsonString(CreatePostRequestModel.builder()
-                                .text("text")
+                                .content("text")
                                 .userSlug(userSlug)
                                 .build()))
                         .contentType(MediaType.APPLICATION_JSON))
@@ -119,13 +119,13 @@ class PostController_CreatePostIT {
 
     static Stream<CreatePostValidationRequest> provideInvalidCreatePostRequest() {
         //text
-        var nullText = CreatePostRequestModel.builder().text(null).build();
-        var emptyText = CreatePostRequestModel.builder().text("").build();
-        var smallText = CreatePostRequestModel.builder().text("a").build();
-        var bigText = CreatePostRequestModel.builder().text(randomAlphanumeric(501)).build();
-        var notTrimmedText = CreatePostRequestModel.builder().text("     ").build();
-        var notTrimmedText2 = CreatePostRequestModel.builder().text("  a  ").build();
-        var xssAttackText = CreatePostRequestModel.builder().text("<script>alert('XSS')</script>").build();
+        var nullText = CreatePostRequestModel.builder().content(null).build();
+        var emptyText = CreatePostRequestModel.builder().content("").build();
+        var smallText = CreatePostRequestModel.builder().content("a").build();
+        var bigText = CreatePostRequestModel.builder().content(randomAlphanumeric(501)).build();
+        var notTrimmedText = CreatePostRequestModel.builder().content("     ").build();
+        var notTrimmedText2 = CreatePostRequestModel.builder().content("  a  ").build();
+        var xssAttackText = CreatePostRequestModel.builder().content("<script>alert('XSS')</script>").build();
         //userSlug
         var nullUserSlug = CreatePostRequestModel.builder().userSlug(null).build();
         var emptyUserSlug = CreatePostRequestModel.builder().userSlug("").build();
@@ -136,13 +136,13 @@ class PostController_CreatePostIT {
 
         return Stream.of(
                 //text
-                CreatePostValidationRequest.of(nullText, "text: must not be blank")
-                , CreatePostValidationRequest.of(emptyText, "text: must not be blank")
-                , CreatePostValidationRequest.of(smallText, "text: size must be between 2 and 500")
-                , CreatePostValidationRequest.of(bigText, "text: size must be between 2 and 500")
-                , CreatePostValidationRequest.of(notTrimmedText, "text: must not be blank")
-                , CreatePostValidationRequest.of(notTrimmedText2, "text: invalid size for trimmed text")
-                , CreatePostValidationRequest.of(xssAttackText, "text: invalid format. It should contain only alphanumeric characters, spaces, underscore and hyphens")
+                CreatePostValidationRequest.of(nullText, "content: must not be blank")
+                , CreatePostValidationRequest.of(emptyText, "content: must not be blank")
+                , CreatePostValidationRequest.of(smallText, "content: size must be between 2 and 500")
+                , CreatePostValidationRequest.of(bigText, "content: size must be between 2 and 500")
+                , CreatePostValidationRequest.of(notTrimmedText, "content: must not be blank")
+                , CreatePostValidationRequest.of(notTrimmedText2, "content: invalid size for trimmed text")
+                , CreatePostValidationRequest.of(xssAttackText, "content: invalid format. It should contain only alphanumeric characters, spaces, underscore and hyphens")
                 //userSlug
                 , CreatePostValidationRequest.of(nullUserSlug, "userSlug: must not be blank")
                 , CreatePostValidationRequest.of(emptyUserSlug, "userSlug: must not be blank")
