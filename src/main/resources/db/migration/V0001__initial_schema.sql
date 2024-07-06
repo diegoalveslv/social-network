@@ -21,26 +21,26 @@ create table user_account
 
 create table user_follows
 (
-    id              serial primary key,
-    user_id         integer                  not null,
-    follows_user_id integer                  not null,
-    followed_at     timestamp with time zone not null,
-    constraint user_id_fk foreign key (user_id) references user_account (id),
-    constraint follows_user_id_fk foreign key (follows_user_id) references user_account (id),
-    constraint user_id_follows_user_id_uq unique (user_id, follows_user_id)
+    id                      serial primary key,
+    user_account_id         integer                  not null,
+    follows_user_account_id integer                  not null,
+    followed_at             timestamp with time zone not null,
+    constraint user_account_id_fk foreign key (user_account_id) references user_account (id),
+    constraint follows_user_account_id_fk foreign key (follows_user_account_id) references user_account (id),
+    constraint user_account_id_follows_user_account_id_uq unique (user_account_id, follows_user_account_id)
 );
 
 create table post
 (
     id                 serial primary key,
     slug               varchar(12)              not null,
-    user_id            integer                  not null,
+    user_account_id    integer                  not null,
     comment_to_post_id integer,
     content            varchar(500),
     created_at         timestamp with time zone not null,
     media_metadata     json,
     constraint post_slug_uq unique (slug),
-    constraint user_id_fk foreign key (user_id) references user_account (id),
+    constraint user_account_id_fk foreign key (user_account_id) references user_account (id),
     constraint comment_to_post_id_fk foreign key (comment_to_post_id) references post (id)
 );
 
@@ -48,26 +48,26 @@ create index post_comment_to_post_id_idx on post (comment_to_post_id);
 
 create table repost
 (
-    id                  serial primary key,
-    post_id             integer                  not null,
-    reposted_by_user_id integer                  not null,
-    reposted_at         timestamp with time zone not null,
+    id                          serial primary key,
+    post_id                     integer                  not null,
+    reposted_by_user_account_id integer                  not null,
+    reposted_at                 timestamp with time zone not null,
     constraint post_id_fk foreign key (post_id) references post (id),
-    constraint reposted_by_user_id_fk foreign key (reposted_by_user_id) references user_account (id),
-    constraint post_id_reposted_by_user_id_uq unique (post_id, reposted_by_user_id)
+    constraint reposted_by_user_account_id_fk foreign key (reposted_by_user_account_id) references user_account (id),
+    constraint post_id_reposted_by_user_account_id_uq unique (post_id, reposted_by_user_account_id)
 );
 
 create index repost_post_id_idx on repost (post_id);
 
 create table post_like
 (
-    id               serial primary key,
-    post_id          integer                  not null,
-    liked_by_user_id integer                  not null,
-    liked_at         timestamp with time zone not null,
+    id                       serial primary key,
+    post_id                  integer                  not null,
+    liked_by_user_account_id integer                  not null,
+    liked_at                 timestamp with time zone not null,
     constraint post_id_fk foreign key (post_id) references post (id),
-    constraint liked_by_user_id_fk foreign key (liked_by_user_id) references user_account (id),
-    constraint post_like_post_id_liked_by_user_id_uq unique (post_id, liked_by_user_id)
+    constraint liked_by_user_account_id_fk foreign key (liked_by_user_account_id) references user_account (id),
+    constraint post_like_post_id_liked_by_user_account_id_uq unique (post_id, liked_by_user_account_id)
 );
 
 create index post_like_post_id_idx on post_like (post_id);

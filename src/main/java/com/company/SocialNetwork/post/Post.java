@@ -28,7 +28,7 @@ public class Post extends BaseEntity {
     @Column(nullable = false, length = 500)
     private String content;
 
-    @JoinColumn(name = "user_id") //TODO refac this column to user_account_id and everywhere in the code
+    @JoinColumn
     @ManyToOne
     private UserAccount userAccount;
 
