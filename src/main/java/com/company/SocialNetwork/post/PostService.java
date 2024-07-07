@@ -74,6 +74,6 @@ public class PostService {
     private String formatContent(String content) {
         content = content.replaceAll("\u0000", "");
         content = StringEscapeUtils.escapeHtml4(content);
-        return content;
+        return content.trim();
     }
 }

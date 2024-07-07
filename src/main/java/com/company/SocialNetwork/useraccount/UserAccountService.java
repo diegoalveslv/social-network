@@ -21,10 +21,10 @@ public class UserAccountService {
 
         var userAccount = UserAccount.builder()
                 .slug(slug)
-                .email(requestData.getEmail())
-                .username(requestData.getUsername())
+                .email(requestData.getEmail().trim())
+                .username(requestData.getUsername().trim())
                 .password(requestData.getPassword())
-                .profileName(requestData.getProfileName())
+                .profileName(requestData.getProfileName().trim())
                 .createdAt(ZonedDateTime.now())
                 .build();
 

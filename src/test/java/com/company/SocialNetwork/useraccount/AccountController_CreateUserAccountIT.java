@@ -77,9 +77,15 @@ public class AccountController_CreateUserAccountIT {
         var userAccount = findUserAccountBySlug(slug);
         shouldHaveEncryptedPassword(request.getPassword(), userAccount.getPassword());
         shouldHaveSetCreatedDate(userAccount);
+        shouldHaveTrimmedTextFields(userAccount, request);
     }
 
     //TODO test scenarios where duplication occurs
+
+    private void shouldHaveTrimmedTextFields(UserAccount userAccount, CreateUserAccountRequestModel request) {
+        assertThat(userAccount.getUsername()).isEqualTo(request.getUsername().trim());
+        assertThat(userAccount.getProfileName()).isEqualTo(request.getProfileName().trim());
+    }
 
     private void shouldHaveSetCreatedDate(UserAccount userAccount) {
         assertThat(userAccount.getCreatedAt()).isNotNull();
@@ -119,6 +125,7 @@ public class AccountController_CreateUserAccountIT {
         var invalidFormatUsername2 = new CreateUserAccountRequestModel().setUsername("a@a");
         var invalidFormatUsername3 = new CreateUserAccountRequestModel().setUsername("any.");
         var invalidFormatUsername4 = new CreateUserAccountRequestModel().setUsername("any:");
+        //TODO username cant have spaces
         //email
         var nullEmail = new CreateUserAccountRequestModel().setEmail(null);
         var bigEmail = new CreateUserAccountRequestModel().setEmail(randomAlphabetic(64) + "@" + randomAlphabetic(187) + ".com");
@@ -177,10 +184,10 @@ public class AccountController_CreateUserAccountIT {
         final String strongPassword2 = "St@word1";
         final String validEmail1 = "email@email";
         final String validEmail2 = "a@b.c";
-        final String validUsername1 = "User _name-1";
-        final String validUsername2 = "User_name-2";
-        final String validProfileName1 = "Valid-Profile_Name da Silva";
-        final String validProfileName2 = "Valid -Profile_Name da Silva";
+        final String validUsername1 = " User _name-1 ";
+        final String validUsername2 = " User_name-2 ";
+        final String validProfileName1 = " Valid-Profile_Name da Silva ";
+        final String validProfileName2 = " Valid -Profile_Name da Silva ";
 
         var validUsernameModel1 = CreateUserAccountRequestModel.builder().username(validUsername1).password(strongPassword1).email(validEmail1).profileName(validProfileName1).build();
         var validUsernameModel2 = CreateUserAccountRequestModel.builder().username(validUsername2).password(strongPassword2).email(validEmail2).profileName(validProfileName2).build();

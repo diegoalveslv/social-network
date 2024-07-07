@@ -117,9 +117,10 @@ class PostController_CommentPostIT {
         var postSlug = createValidPost(userSlug);
         String url = uriBuilder.buildAndExpand(postSlug).toUriString();
 
+        var content = " comment text ";
         var result = mockMvc.perform(post(url)
                         .content(asJsonString(CommentPostRequestModel.builder()
-                                .content("comment text")
+                                .content(content)
                                 .userSlug(userSlug)
                                 .build()))
                         .contentType(MediaType.APPLICATION_JSON))
@@ -138,6 +139,7 @@ class PostController_CommentPostIT {
         var postComment = findPostBySlug(slug);
         shouldHaveSetCreatedDate(postComment);
         shouldHaveSetCommentOnPost(postComment, postSlug);
+        shouldHaveTrimmedContent(postComment, content);
     }
 
     @Test
@@ -170,6 +172,10 @@ class PostController_CommentPostIT {
         var post = findPostBySlug(slug);
         shouldHaveSetCreatedDate(post);
         shouldHaveContentEqualTo(post, escapedText);
+    }
+
+    private void shouldHaveTrimmedContent(Post post, String notTrimmedContent) {
+        assertThat(post.getContent()).isEqualTo(notTrimmedContent.trim());
     }
 
     private void shouldHaveContentEqualTo(Post post, String specialCharacters) {

@@ -33,7 +33,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest
 @AutoConfigureMockMvc
 @Import(TestcontainersConfiguration.class)
-//TODO trim all string fields. Check other classes too
 class PostController_CreatePostIT {
 
     @Autowired
@@ -78,9 +77,10 @@ class PostController_CreatePostIT {
     public void givenValidRequest_shouldReturnCreated() throws Exception {
         var userSlug = createValidUser();
 
+        var content = " text ";
         var result = mockMvc.perform(post(CREATE_POST_PATH)
                         .content(asJsonString(CreatePostRequestModel.builder()
-                                .content("text")
+                                .content(content)
                                 .userSlug(userSlug)
                                 .build()))
                         .contentType(MediaType.APPLICATION_JSON))
@@ -98,6 +98,7 @@ class PostController_CreatePostIT {
 
         var post = findPostBySlug(slug);
         shouldHaveSetCreatedDate(post);
+        shouldHaveTrimmedContent(post, content);
     }
 
     @Test
@@ -128,6 +129,10 @@ class PostController_CreatePostIT {
         var post = findPostBySlug(slug);
         shouldHaveSetCreatedDate(post);
         shouldHaveContentEqualTo(post, escapedText);
+    }
+
+    private void shouldHaveTrimmedContent(Post post, String notTrimmedContent) {
+        assertThat(post.getContent()).isEqualTo(notTrimmedContent.trim());
     }
 
     private void shouldHaveContentEqualTo(Post post, String specialCharacters) {
