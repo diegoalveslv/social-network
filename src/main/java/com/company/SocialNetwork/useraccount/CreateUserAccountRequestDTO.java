@@ -1,6 +1,8 @@
 package com.company.SocialNetwork.useraccount;
 
+import com.company.SocialNetwork.shared.validation.SizeTrimmed;
 import com.company.SocialNetwork.useraccount.validation.SafeText;
+import com.company.SocialNetwork.useraccount.validation.SafeTextType;
 import com.company.SocialNetwork.useraccount.validation.ValidPassword;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
@@ -14,18 +16,17 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-//TODO use SizeTrimmed
-//TODO use NotBlankTrimmed
 public class CreateUserAccountRequestDTO {
 
     @NotBlank
     @Size(min = 2, max = 40)
+    @SizeTrimmed(min = 2, max = 40)
     @SafeText
     private String profileName;
 
     @NotBlank
     @Size(min = 3, max = 40)
-    @SafeText
+    @SafeText(payload = SafeTextType.USERNAME.class)
     private String username;
 
     @NotBlank

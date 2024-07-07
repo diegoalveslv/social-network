@@ -2,12 +2,12 @@ package com.company.SocialNetwork.post;
 
 import com.company.SocialNetwork.exception.FieldValidationException;
 import com.company.SocialNetwork.exception.NotFoundException;
-import com.company.SocialNetwork.shared.validation.NotBlankTrimmed;
 import com.company.SocialNetwork.shared.validation.SizeTrimmed;
 import com.company.SocialNetwork.useraccount.UserAccount;
 import com.company.SocialNetwork.useraccount.UserAccountRepository;
 import com.company.SocialNetwork.utils.SlugGenerator;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -43,7 +43,7 @@ public class PostService {
         return savedPost.getSlug();
     }
 
-    public String commentPost(@Valid @NotBlankTrimmed @Size(min = 12, max = 12) @SizeTrimmed(min = 12, max = 12) String postSlug //TODO ugly
+    public String commentPost(@Valid @NotBlank @Size(min = 12, max = 12) @SizeTrimmed(min = 12, max = 12) String postSlug //TODO ugly
             , @Valid CommentPostRequestDTO requestData) {
         var postCommentedOn = getPostOrThrowNotFound(postSlug);
         var user = getUserOrThrowException(requestData.getUserSlug(), CommentPostRequestDTO.Fields.userSlug);

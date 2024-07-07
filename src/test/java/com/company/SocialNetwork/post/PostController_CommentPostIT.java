@@ -148,8 +148,8 @@ class PostController_CommentPostIT {
         var userSlug = createValidUserAccount();
         var postSlug = createValidPost(userSlug);
         String url = uriBuilder.buildAndExpand(postSlug).toUriString();
-        var unescapedText = "<>\"'&\\/<>'\"&=+-()[]{};, \t\n\r\u0000";
-        var escapedText = "&lt;&gt;&quot;'&amp;\\/&lt;&gt;'&quot;&amp;=+-()[]{};, \t\n\r";
+        var unescapedText = "<>\"'&\\/<>'\"&=+-()[]{};, \t\n\r\u0000end";
+        var escapedText = "&lt;&gt;&quot;'&amp;\\/&lt;&gt;'&quot;&amp;=+-()[]{};, \t\n\rend";
 
         var result = mockMvc.perform(post(url)
                         .content(asJsonString(CommentPostRequestModel.builder()

@@ -105,8 +105,8 @@ class PostController_CreatePostIT {
     @Sql(scripts = "classpath:db-scripts/cleanUp.sql", executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD)
     public void givenPostContentHasSpecialCharacters_shouldSaveEscapedVersionOfContent() throws Exception {
         var userSlug = createValidUser();
-        var unescapedText = "<>\"'&\\/<>'\"&=+-()[]{};, \t\n\r\u0000";
-        var escapedText = "&lt;&gt;&quot;'&amp;\\/&lt;&gt;'&quot;&amp;=+-()[]{};, \t\n\r";
+        var unescapedText = "<>\"'&\\/<>'\"&=+-()[]{};, \t\n\r\u0000end";
+        var escapedText = "&lt;&gt;&quot;'&amp;\\/&lt;&gt;'&quot;&amp;=+-()[]{};, \t\n\rend";
 
         var result = mockMvc.perform(post(CREATE_POST_PATH)
                         .content(asJsonString(CreatePostRequestModel.builder()

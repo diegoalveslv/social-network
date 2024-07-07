@@ -104,17 +104,6 @@ public class AccountController_CreateUserAccountIT {
         }
     }
 
-    private static String getSlugFromLocation(String location) {
-        String[] split = location.split("/");
-        return split[split.length - 1];
-    }
-
-    private UserAccount findUserAccountBySlug(String slug) {
-        return entityManager.createQuery("SELECT u FROM UserAccount u WHERE u.slug = :slug", UserAccount.class)
-                .setParameter("slug", slug)
-                .getSingleResult();
-    }
-
     static Stream<Arguments> provideInvalidCreateUserAccountRequest() {
         //username
         var nullUsername = new CreateUserAccountRequestModel().setUsername(null);
@@ -125,7 +114,7 @@ public class AccountController_CreateUserAccountIT {
         var invalidFormatUsername2 = new CreateUserAccountRequestModel().setUsername("a@a");
         var invalidFormatUsername3 = new CreateUserAccountRequestModel().setUsername("any.");
         var invalidFormatUsername4 = new CreateUserAccountRequestModel().setUsername("any:");
-        //TODO username cant have spaces
+        var invalidFormatUsername5 = new CreateUserAccountRequestModel().setUsername("user name");
         //email
         var nullEmail = new CreateUserAccountRequestModel().setEmail(null);
         var bigEmail = new CreateUserAccountRequestModel().setEmail(randomAlphabetic(64) + "@" + randomAlphabetic(187) + ".com");
@@ -144,6 +133,8 @@ public class AccountController_CreateUserAccountIT {
         var smallProfileName = new CreateUserAccountRequestModel().setProfileName(randomAlphanumeric(1));
         var bigProfileName = new CreateUserAccountRequestModel().setProfileName(randomAlphanumeric(41));
         var xssAttackProfileName = new CreateUserAccountRequestModel().setProfileName("<script>alert('XSS')</script>");
+        var trimmedProfileName1 = new CreateUserAccountRequestModel().setProfileName("  a  ");
+        var trimmedProfileName2 = new CreateUserAccountRequestModel().setProfileName("    ");
 
         return Stream.of(
                 //username
@@ -151,10 +142,11 @@ public class AccountController_CreateUserAccountIT {
                 , Arguments.of(blankUsername, "username: must not be blank")
                 , Arguments.of(smallUsername, "username: size must be between 3 and 40")
                 , Arguments.of(bigUsername, "username: size must be between 3 and 40")
-                , Arguments.of(invalidFormatUsername1, "username: invalid format. It should contain only alphanumeric characters, spaces, underscore and hyphens")
-                , Arguments.of(invalidFormatUsername2, "username: invalid format. It should contain only alphanumeric characters, spaces, underscore and hyphens")
-                , Arguments.of(invalidFormatUsername3, "username: invalid format. It should contain only alphanumeric characters, spaces, underscore and hyphens")
-                , Arguments.of(invalidFormatUsername4, "username: invalid format. It should contain only alphanumeric characters, spaces, underscore and hyphens")
+                , Arguments.of(invalidFormatUsername1, "username: invalid format. It should contain only alphanumeric characters, underscore and hyphens")
+                , Arguments.of(invalidFormatUsername2, "username: invalid format. It should contain only alphanumeric characters, underscore and hyphens")
+                , Arguments.of(invalidFormatUsername3, "username: invalid format. It should contain only alphanumeric characters, underscore and hyphens")
+                , Arguments.of(invalidFormatUsername4, "username: invalid format. It should contain only alphanumeric characters, underscore and hyphens")
+                , Arguments.of(invalidFormatUsername5, "username: invalid format. It should contain only alphanumeric characters, underscore and hyphens")
                 //email
                 , Arguments.of(nullEmail, "email: must not be blank")
                 , Arguments.of(bigEmail, "email: size must be between 5 and 255")
@@ -176,6 +168,8 @@ public class AccountController_CreateUserAccountIT {
                 , Arguments.of(smallProfileName, "profileName: size must be between 2 and 40")
                 , Arguments.of(bigProfileName, "profileName: size must be between 2 and 40")
                 , Arguments.of(xssAttackProfileName, "profileName: invalid format. It should contain only alphanumeric characters, spaces, underscore and hyphens")
+                , Arguments.of(trimmedProfileName1, "profileName: invalid size for trimmed text")
+                , Arguments.of(trimmedProfileName2, "profileName: must not be blank")
         );
     }
 
@@ -184,8 +178,8 @@ public class AccountController_CreateUserAccountIT {
         final String strongPassword2 = "St@word1";
         final String validEmail1 = "email@email";
         final String validEmail2 = "a@b.c";
-        final String validUsername1 = " User _name-1 ";
-        final String validUsername2 = " User_name-2 ";
+        final String validUsername1 = "User_name-1";
+        final String validUsername2 = "User_name-2";
         final String validProfileName1 = " Valid-Profile_Name da Silva ";
         final String validProfileName2 = " Valid -Profile_Name da Silva ";
 
@@ -195,5 +189,16 @@ public class AccountController_CreateUserAccountIT {
                 Arguments.of(validUsernameModel1)
                 , Arguments.of(validUsernameModel2)
         );
+    }
+
+    private static String getSlugFromLocation(String location) {
+        String[] split = location.split("/");
+        return split[split.length - 1];
+    }
+
+    private UserAccount findUserAccountBySlug(String slug) {
+        return entityManager.createQuery("SELECT u FROM UserAccount u WHERE u.slug = :slug", UserAccount.class)
+                .setParameter("slug", slug)
+                .getSingleResult();
     }
 }
