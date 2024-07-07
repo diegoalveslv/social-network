@@ -32,6 +32,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest
 @AutoConfigureMockMvc
 @Import(TestcontainersConfiguration.class)
+//TODO trim all string fields. Check other classes too
 class PostController_CreatePostIT {
 
     @Autowired
@@ -98,6 +99,40 @@ class PostController_CreatePostIT {
         shouldHaveSetCreatedDate(post);
     }
 
+    @Test
+    @Sql(scripts = "classpath:db-scripts/cleanUp.sql", executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD)
+    public void givenPostContentHasSpecialCharacters_shouldSaveEscapedVersionOfContent() throws Exception {
+        var userSlug = userAccountService.createUserAccount(new CreateUserAccountRequestDTO("profileName", "username", "email@email", "Strong@Pass123"));
+        var unescapedText = "<>\"'&\\/<>'\"&=+-()[]{};, \t\n\r\u0000";
+        var escapedText = "&lt;&gt;&quot;'&amp;\\/&lt;&gt;'&quot;&amp;=+-()[]{};, \t\n\r";
+
+        var result = mockMvc.perform(post(CREATE_POST_PATH)
+                        .content(asJsonString(CreatePostRequestModel.builder()
+                                .content(unescapedText)
+                                .userSlug(userSlug)
+                                .build()))
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$").doesNotExist())
+                .andExpect(header().exists("location"))
+                .andExpect(header().string("location", matchesPattern("http://localhost/posts/\\w{12}")))
+                .andReturn();
+
+        String location = result.getResponse().getHeader("location");
+        assertThat(location).isNotNull();
+
+        String slug = getSlugFromLocation(location);
+        shouldExistInDatabase(slug);
+
+        var post = findPostBySlug(slug);
+        shouldHaveSetCreatedDate(post);
+        shouldHaveContentEqualTo(post, escapedText);
+    }
+
+    private void shouldHaveContentEqualTo(Post post, String specialCharacters) {
+        assertThat(post.getContent()).isEqualTo(specialCharacters);
+    }
+
     private void shouldHaveSetCreatedDate(Post post) {
         assertThat(post.getCreatedAt()).isNotNull();
     }
@@ -125,7 +160,6 @@ class PostController_CreatePostIT {
         var bigText = CreatePostRequestModel.builder().content(randomAlphanumeric(501)).build();
         var notTrimmedText = CreatePostRequestModel.builder().content("     ").build();
         var notTrimmedText2 = CreatePostRequestModel.builder().content("  a  ").build();
-        var xssAttackText = CreatePostRequestModel.builder().content("<script>alert('XSS')</script>").build();
         //userSlug
         var nullUserSlug = CreatePostRequestModel.builder().userSlug(null).build();
         var emptyUserSlug = CreatePostRequestModel.builder().userSlug("").build();
@@ -142,7 +176,6 @@ class PostController_CreatePostIT {
                 , CreatePostValidationRequest.of(bigText, "content: size must be between 2 and 500")
                 , CreatePostValidationRequest.of(notTrimmedText, "content: must not be blank")
                 , CreatePostValidationRequest.of(notTrimmedText2, "content: invalid size for trimmed text")
-                , CreatePostValidationRequest.of(xssAttackText, "content: invalid format. It should contain only alphanumeric characters, spaces, underscore and hyphens")
                 //userSlug
                 , CreatePostValidationRequest.of(nullUserSlug, "userSlug: must not be blank")
                 , CreatePostValidationRequest.of(emptyUserSlug, "userSlug: must not be blank")

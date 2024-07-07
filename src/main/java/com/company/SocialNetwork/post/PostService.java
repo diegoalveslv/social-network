@@ -11,6 +11,7 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.Size;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.text.StringEscapeUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.validation.annotation.Validated;
 
@@ -29,11 +30,12 @@ public class PostService {
     public String createPost(@Valid CreatePostRequestDTO requestData) {
         var userSlug = requestData.getUserSlug();
         var user = getUserOrThrowException(userSlug, CreatePostRequestDTO.Fields.userSlug);
+        var content = formatContent(requestData.getContent());
 
         var post = Post.builder()
                 .slug(slugGenerator.generateSlug())
                 .userAccount(user)
-                .content(requestData.getContent())
+                .content(content)
                 .createdAt(ZonedDateTime.now())
                 .build();
 
@@ -45,12 +47,13 @@ public class PostService {
             , @Valid CommentPostRequestDTO requestData) {
         var postCommentedOn = getPostOrThrowNotFound(postSlug);
         var user = getUserOrThrowException(requestData.getUserSlug(), CommentPostRequestDTO.Fields.userSlug);
+        var content = formatContent(requestData.getContent());
 
         var postComment = Post.builder()
                 .slug(slugGenerator.generateSlug())
                 .commentToPost(postCommentedOn)
                 .userAccount(user)
-                .content(requestData.getContent())
+                .content(content)
                 .createdAt(ZonedDateTime.now())
                 .build();
 
@@ -66,5 +69,11 @@ public class PostService {
     private UserAccount getUserOrThrowException(String userSlug, String fieldName) {
         return userAccountRepository.findFirstBySlug(userSlug)
                 .orElseThrow(() -> new FieldValidationException(fieldName, "user not found"));
+    }
+
+    private String formatContent(String content) {
+        content = content.replaceAll("\u0000", "");
+        content = StringEscapeUtils.escapeHtml4(content);
+        return content;
     }
 }

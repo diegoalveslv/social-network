@@ -138,6 +138,42 @@ class PostController_CommentPostIT {
         shouldHaveSetCommentOnPost(postComment, postSlug);
     }
 
+    @Test
+    @Sql(scripts = "classpath:db-scripts/cleanUp.sql", executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD)
+    public void givenPostContentHasSpecialCharacters_shouldSaveEscapedVersionOfContent() throws Exception {
+        var userSlug = userAccountService.createUserAccount(new CreateUserAccountRequestDTO("profileName", "username", "email@email", "Strong@Pass123"));
+        var postSlug = postService.createPost(new CreatePostRequestDTO(userSlug, "text"));
+        String url = UriComponentsBuilder.fromUriString(COMMENT_POST_PATH).buildAndExpand(postSlug).toUriString();
+        var unescapedText = "<>\"'&\\/<>'\"&=+-()[]{};, \t\n\r\u0000";
+        var escapedText = "&lt;&gt;&quot;'&amp;\\/&lt;&gt;'&quot;&amp;=+-()[]{};, \t\n\r";
+
+        var result = mockMvc.perform(post(url)
+                        .content(asJsonString(CommentPostRequestModel.builder()
+                                .content(unescapedText)
+                                .userSlug(userSlug)
+                                .build()))
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$").doesNotExist())
+                .andExpect(header().exists("location"))
+                .andExpect(header().string("location", matchesPattern("http://localhost/posts/\\w{12}")))
+                .andReturn();
+
+        String location = result.getResponse().getHeader("location");
+        assertThat(location).isNotNull();
+
+        String slug = getSlugFromLocation(location);
+        shouldExistInDatabase(slug);
+
+        var post = findPostBySlug(slug);
+        shouldHaveSetCreatedDate(post);
+        shouldHaveContentEqualTo(post, escapedText);
+    }
+
+    private void shouldHaveContentEqualTo(Post post, String specialCharacters) {
+        assertThat(post.getContent()).isEqualTo(specialCharacters);
+    }
+
     private void shouldHaveSetCommentOnPost(Post postComment, String postSlug) {
         assertThat(postComment.getCommentToPost().getSlug()).isEqualTo(postSlug);
     }
@@ -172,7 +208,6 @@ class PostController_CommentPostIT {
         var bigText = CommentPostRequestModel.builder().content(randomAlphanumeric(501)).build();
         var notTrimmedText = CommentPostRequestModel.builder().content("     ").build();
         var notTrimmedText2 = CommentPostRequestModel.builder().content("  a  ").build();
-        var xssAttackText = CommentPostRequestModel.builder().content("<script>alert('XSS')</script>").build();
 
         //userSlug
         var nullUserSlug = CommentPostRequestModel.builder().userSlug(null).build();
@@ -190,7 +225,6 @@ class PostController_CommentPostIT {
                 , CommentPostValidationRequest.of(bigText, "content: size must be between 2 and 500")
                 , CommentPostValidationRequest.of(notTrimmedText, "content: must not be blank")
                 , CommentPostValidationRequest.of(notTrimmedText2, "content: invalid size for trimmed text")
-                , CommentPostValidationRequest.of(xssAttackText, "content: invalid format. It should contain only alphanumeric characters, spaces, underscore and hyphens")
                 //userSlug
                 , CommentPostValidationRequest.of(nullUserSlug, "userSlug: must not be blank")
                 , CommentPostValidationRequest.of(emptyUserSlug, "userSlug: must not be blank")
