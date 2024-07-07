@@ -85,13 +85,13 @@ class PostController_CommentPostIT {
 
     @ParameterizedTest
     @MethodSource("provideInvalidCommentPostRequest")
-    public void givenInvalidFieldInRequest_shouldReturnUnprocessableEntity(CommentPostValidationRequest request) throws Exception {
+    public void givenInvalidFieldInRequest_shouldReturnUnprocessableEntity(CommentPostRequestModel request, String expectedMessage) throws Exception {
         String url = uriBuilder.buildAndExpand("postSlug").toUriString();
         mockMvc.perform(post(url)
-                        .content(asJsonString(request.getRequestDTO()))
+                        .content(asJsonString(request))
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isUnprocessableEntity())
-                .andExpect(jsonPath("$.messages").value(hasItems(request.getExpectedMessages())));
+                .andExpect(jsonPath("$.messages").value(hasItems(expectedMessage)));
     }
 
     @Test
@@ -202,38 +202,38 @@ class PostController_CommentPostIT {
                 ));
     }
 
-    static Stream<CommentPostValidationRequest> provideInvalidCommentPostRequest() {
+    static Stream<Arguments> provideInvalidCommentPostRequest() {
         //text
-        var nullText = CommentPostRequestModel.builder().content(null).build();
-        var emptyText = CommentPostRequestModel.builder().content("").build();
-        var smallText = CommentPostRequestModel.builder().content("a").build();
-        var bigText = CommentPostRequestModel.builder().content(randomAlphanumeric(501)).build();
-        var notTrimmedText = CommentPostRequestModel.builder().content("     ").build();
-        var notTrimmedText2 = CommentPostRequestModel.builder().content("  a  ").build();
+        var nullText = new CommentPostRequestModel().setContent(null);
+        var emptyText = new CommentPostRequestModel().setContent("");
+        var smallText = new CommentPostRequestModel().setContent("a");
+        var bigText = new CommentPostRequestModel().setContent(randomAlphanumeric(501));
+        var notTrimmedText = new CommentPostRequestModel().setContent("      ");
+        var notTrimmedText2 = new CommentPostRequestModel().setContent("  a   ");
 
         //userSlug
-        var nullUserSlug = CommentPostRequestModel.builder().userSlug(null).build();
-        var emptyUserSlug = CommentPostRequestModel.builder().userSlug("").build();
-        var smallUserSlug = CommentPostRequestModel.builder().userSlug(randomAlphanumeric(11)).build();
-        var bigUserSlug = CommentPostRequestModel.builder().userSlug(randomAlphanumeric(13)).build();
-        var notTrimmedUserSlug = CommentPostRequestModel.builder().userSlug("            ").build();
-        var notTrimmedUserSlug2 = CommentPostRequestModel.builder().userSlug("      e     ").build();
+        var nullUserSlug = new CommentPostRequestModel().setUserSlug(null);
+        var emptyUserSlug = new CommentPostRequestModel().setUserSlug("");
+        var smallUserSlug = new CommentPostRequestModel().setUserSlug(randomAlphanumeric(11));
+        var bigUserSlug = new CommentPostRequestModel().setUserSlug(randomAlphanumeric(13));
+        var notTrimmedUserSlug = new CommentPostRequestModel().setUserSlug("             ");
+        var notTrimmedUserSlug2 = new CommentPostRequestModel().setUserSlug("      e      ");
 
         return Stream.of(
                 //text
-                CommentPostValidationRequest.of(nullText, "content: must not be blank") //TODO simplify this
-                , CommentPostValidationRequest.of(emptyText, "content: must not be blank")
-                , CommentPostValidationRequest.of(smallText, "content: size must be between 2 and 500")
-                , CommentPostValidationRequest.of(bigText, "content: size must be between 2 and 500")
-                , CommentPostValidationRequest.of(notTrimmedText, "content: must not be blank")
-                , CommentPostValidationRequest.of(notTrimmedText2, "content: invalid size for trimmed text")
+                Arguments.of(nullText, "content: must not be blank")
+                , Arguments.of(emptyText, "content: must not be blank")
+                , Arguments.of(smallText, "content: size must be between 2 and 500")
+                , Arguments.of(bigText, "content: size must be between 2 and 500")
+                , Arguments.of(notTrimmedText, "content: must not be blank")
+                , Arguments.of(notTrimmedText2, "content: invalid size for trimmed text")
                 //userSlug
-                , CommentPostValidationRequest.of(nullUserSlug, "userSlug: must not be blank")
-                , CommentPostValidationRequest.of(emptyUserSlug, "userSlug: must not be blank")
-                , CommentPostValidationRequest.of(smallUserSlug, "userSlug: size must be between 12 and 12")
-                , CommentPostValidationRequest.of(bigUserSlug, "userSlug: size must be between 12 and 12")
-                , CommentPostValidationRequest.of(notTrimmedUserSlug, "userSlug: must not be blank")
-                , CommentPostValidationRequest.of(notTrimmedUserSlug2, "userSlug: invalid size for trimmed text")
+                , Arguments.of(nullUserSlug, "userSlug: must not be blank")
+                , Arguments.of(emptyUserSlug, "userSlug: must not be blank")
+                , Arguments.of(smallUserSlug, "userSlug: size must be between 12 and 12")
+                , Arguments.of(bigUserSlug, "userSlug: size must be between 12 and 12")
+                , Arguments.of(notTrimmedUserSlug, "userSlug: must not be blank")
+                , Arguments.of(notTrimmedUserSlug2, "userSlug: invalid size for trimmed text")
         );
     }
 

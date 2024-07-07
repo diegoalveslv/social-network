@@ -7,6 +7,7 @@ import jakarta.persistence.EntityManager;
 import jakarta.persistence.NoResultException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -52,12 +53,12 @@ class PostController_CreatePostIT {
 
     @ParameterizedTest
     @MethodSource("provideInvalidCreatePostRequest")
-    public void givenInvalidFieldInRequest_shouldReturnUnprocessableEntity(CreatePostValidationRequest request) throws Exception {
+    public void givenInvalidFieldInRequest_shouldReturnUnprocessableEntity(CreatePostRequestModel request, String expectedMessage) throws Exception {
         mockMvc.perform(post(CREATE_POST_PATH)
-                        .content(asJsonString(request.getRequestDTO()))
+                        .content(asJsonString(request))
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isUnprocessableEntity())
-                .andExpect(jsonPath("$.messages").value(hasItems(request.getExpectedMessages())));
+                .andExpect(jsonPath("$.messages").value(hasItems(expectedMessage)));
     }
 
     @Test
@@ -146,37 +147,37 @@ class PostController_CreatePostIT {
         }
     }
 
-    static Stream<CreatePostValidationRequest> provideInvalidCreatePostRequest() {
+    static Stream<Arguments> provideInvalidCreatePostRequest() {
         //text
-        var nullText = CreatePostRequestModel.builder().content(null).build();
-        var emptyText = CreatePostRequestModel.builder().content("").build();
-        var smallText = CreatePostRequestModel.builder().content("a").build();
-        var bigText = CreatePostRequestModel.builder().content(randomAlphanumeric(501)).build();
-        var notTrimmedText = CreatePostRequestModel.builder().content("     ").build();
-        var notTrimmedText2 = CreatePostRequestModel.builder().content("  a  ").build();
+        var nullText = new CreatePostRequestModel().setContent(null);
+        var emptyText = new CreatePostRequestModel().setContent("");
+        var smallText = new CreatePostRequestModel().setContent("a");
+        var bigText = new CreatePostRequestModel().setContent(randomAlphanumeric(501));
+        var notTrimmedText = new CreatePostRequestModel().setContent("      ");
+        var notTrimmedText2 = new CreatePostRequestModel().setContent("  a   ");
         //userSlug
-        var nullUserSlug = CreatePostRequestModel.builder().userSlug(null).build();
-        var emptyUserSlug = CreatePostRequestModel.builder().userSlug("").build();
-        var smallUserSlug = CreatePostRequestModel.builder().userSlug(randomAlphanumeric(11)).build();
-        var bigUserSlug = CreatePostRequestModel.builder().userSlug(randomAlphanumeric(13)).build();
-        var notTrimmedUserSlug = CreatePostRequestModel.builder().userSlug("            ").build();
-        var notTrimmedUserSlug2 = CreatePostRequestModel.builder().userSlug("      e     ").build();
+        var nullUserSlug = new CreatePostRequestModel().setUserSlug(null);
+        var emptyUserSlug = new CreatePostRequestModel().setUserSlug("");
+        var smallUserSlug = new CreatePostRequestModel().setUserSlug(randomAlphanumeric(11));
+        var bigUserSlug = new CreatePostRequestModel().setUserSlug(randomAlphanumeric(13));
+        var notTrimmedUserSlug = new CreatePostRequestModel().setUserSlug("             ");
+        var notTrimmedUserSlug2 = new CreatePostRequestModel().setUserSlug("      e      ");
 
         return Stream.of(
                 //text
-                CreatePostValidationRequest.of(nullText, "content: must not be blank")
-                , CreatePostValidationRequest.of(emptyText, "content: must not be blank")
-                , CreatePostValidationRequest.of(smallText, "content: size must be between 2 and 500")
-                , CreatePostValidationRequest.of(bigText, "content: size must be between 2 and 500")
-                , CreatePostValidationRequest.of(notTrimmedText, "content: must not be blank")
-                , CreatePostValidationRequest.of(notTrimmedText2, "content: invalid size for trimmed text")
+                Arguments.of(nullText, "content: must not be blank")
+                , Arguments.of(emptyText, "content: must not be blank")
+                , Arguments.of(smallText, "content: size must be between 2 and 500")
+                , Arguments.of(bigText, "content: size must be between 2 and 500")
+                , Arguments.of(notTrimmedText, "content: must not be blank")
+                , Arguments.of(notTrimmedText2, "content: invalid size for trimmed text")
                 //userSlug
-                , CreatePostValidationRequest.of(nullUserSlug, "userSlug: must not be blank")
-                , CreatePostValidationRequest.of(emptyUserSlug, "userSlug: must not be blank")
-                , CreatePostValidationRequest.of(smallUserSlug, "userSlug: size must be between 12 and 12")
-                , CreatePostValidationRequest.of(bigUserSlug, "userSlug: size must be between 12 and 12")
-                , CreatePostValidationRequest.of(notTrimmedUserSlug, "userSlug: must not be blank")
-                , CreatePostValidationRequest.of(notTrimmedUserSlug2, "userSlug: invalid size for trimmed text")
+                , Arguments.of(nullUserSlug, "userSlug: must not be blank")
+                , Arguments.of(emptyUserSlug, "userSlug: must not be blank")
+                , Arguments.of(smallUserSlug, "userSlug: size must be between 12 and 12")
+                , Arguments.of(bigUserSlug, "userSlug: size must be between 12 and 12")
+                , Arguments.of(notTrimmedUserSlug, "userSlug: must not be blank")
+                , Arguments.of(notTrimmedUserSlug2, "userSlug: invalid size for trimmed text")
         );
     }
 
