@@ -39,6 +39,9 @@ public class AccountController_CreateUserAccountIT {
     @Autowired
     private EntityManager entityManager;
 
+    @Autowired
+    private UserAccountService userAccountService;
+
     @Test
     public void givenBodyIsEmpty_shouldReturnBadRequest() throws Exception {
         mockMvc.perform(post(CREATE_USER_ACCOUNT_PATH))
@@ -80,7 +83,59 @@ public class AccountController_CreateUserAccountIT {
         shouldHaveTrimmedTextFields(userAccount, request);
     }
 
-    //TODO test scenarios where duplication occurs
+    @Test
+    @Sql(scripts = "classpath:db-scripts/cleanUp.sql", executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD)
+    public void givenDuplicatedUsername_shouldReturnUnprocessableEntity() throws Exception {
+        var username = "username";
+        createValidUser("profileName", username, "email@email");
+
+        mockMvc.perform(post(CREATE_USER_ACCOUNT_PATH)
+                        .content(asJsonString(CreateUserAccountRequestModel.builder()
+                                .username(username)
+                                .profileName("anotherProfileName")
+                                .email("another@email")
+                                .password("Strong@pass123")
+                                .build()))
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isUnprocessableEntity())
+                .andExpect(jsonPath("$.messages").value(hasItems("username: already exists")));
+    }
+
+    @Test
+    @Sql(scripts = "classpath:db-scripts/cleanUp.sql", executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD)
+    public void givenDuplicatedProfileName_shouldReturnUnprocessableEntity() throws Exception {
+        var profileName = "profileName";
+        createValidUser(profileName, "username", "email@email");
+
+        mockMvc.perform(post(CREATE_USER_ACCOUNT_PATH)
+                        .content(asJsonString(CreateUserAccountRequestModel.builder()
+                                .username("anotherusername")
+                                .profileName(profileName)
+                                .email("another@email")
+                                .password("Strong@pass123")
+                                .build()))
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isUnprocessableEntity())
+                .andExpect(jsonPath("$.messages").value(hasItems("profileName: already exists")));
+    }
+
+    @Test
+    @Sql(scripts = "classpath:db-scripts/cleanUp.sql", executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD)
+    public void givenDuplicatedEmail_shouldReturnUnprocessableEntity() throws Exception {
+        var email = "email@email";
+        createValidUser("profileName", "username", email);
+
+        mockMvc.perform(post(CREATE_USER_ACCOUNT_PATH)
+                        .content(asJsonString(CreateUserAccountRequestModel.builder()
+                                .username("anotherusername")
+                                .profileName("anotherprofileName")
+                                .email(email)
+                                .password("Strong@pass123")
+                                .build()))
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isUnprocessableEntity())
+                .andExpect(jsonPath("$.messages").value(hasItems("email: already exists")));
+    }
 
     private void shouldHaveTrimmedTextFields(UserAccount userAccount, CreateUserAccountRequestModel request) {
         assertThat(userAccount.getUsername()).isEqualTo(request.getUsername().trim());
@@ -200,5 +255,9 @@ public class AccountController_CreateUserAccountIT {
         return entityManager.createQuery("SELECT u FROM UserAccount u WHERE u.slug = :slug", UserAccount.class)
                 .setParameter("slug", slug)
                 .getSingleResult();
+    }
+
+    private String createValidUser(String profileName, String username, String email) {
+        return userAccountService.createUserAccount(new CreateUserAccountRequestDTO(profileName, username, email, "Strong@Pass123"));
     }
 }

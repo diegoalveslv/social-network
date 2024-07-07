@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import static org.springframework.http.HttpStatus.NOT_FOUND;
 import static org.springframework.http.HttpStatus.UNPROCESSABLE_ENTITY;
@@ -20,7 +21,8 @@ public class CustomExceptionHandler {
 
     @ExceptionHandler({MethodArgumentNotValidException.class
             , jakarta.validation.ConstraintViolationException.class
-            , FieldValidationException.class})
+            , FieldValidationException.class
+            , FieldListValidationException.class})
     public ResponseEntity<CustomErrorResponse> handleValidationExceptions(Exception ex) {
 
         List<String> messages = new ArrayList<>();
@@ -41,6 +43,11 @@ public class CustomExceptionHandler {
             String fieldName = cfe.getFieldName();
             String errorMessage = cfe.getErrorMessage();
             messages.add("%s: %s".formatted(fieldName, errorMessage));
+        } else if (ex instanceof FieldListValidationException flve) {
+            Map<String, String> messageToFieldName = flve.getMessageToFieldName();
+            messageToFieldName.forEach((fieldName, message) -> {
+                messages.add("%s: %s".formatted(fieldName, message));
+            });
         } else {
             var invalidExceptionTypeEx = new RuntimeException("Invalid exception type.");
             log.error("Invalid exception type: " + ex.getClass().getName(), invalidExceptionTypeEx);
