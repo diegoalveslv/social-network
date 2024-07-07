@@ -35,6 +35,8 @@ import static org.testcontainers.shaded.org.apache.commons.lang3.RandomStringUti
 @Import(TestcontainersConfiguration.class)
 class PostController_CommentPostIT {
 
+    private final UriComponentsBuilder uriBuilder = UriComponentsBuilder.fromUriString(COMMENT_POST_PATH);
+
     @Autowired
     private MockMvc mockMvc;
 
@@ -49,7 +51,7 @@ class PostController_CommentPostIT {
 
     @Test
     public void givenBodyIsEmpty_shouldReturnBadRequest() throws Exception {
-        String url = UriComponentsBuilder.fromUriString(COMMENT_POST_PATH).buildAndExpand("postSlug").toUriString();
+        String url = uriBuilder.buildAndExpand("postSlug").toUriString();
         mockMvc.perform(post(url))
                 .andExpect(status().isBadRequest());
     }
@@ -57,7 +59,7 @@ class PostController_CommentPostIT {
     @ParameterizedTest
     @MethodSource("provideInvalidPostSlugs")
     public void givenInvalidPostSlugInPathParam_thenReturnUnprocessableEntity(String postSlug, String expectedMessage) throws Exception {
-        String url = UriComponentsBuilder.fromUriString(COMMENT_POST_PATH).buildAndExpand(postSlug).toUriString();
+        String url = uriBuilder.buildAndExpand(postSlug).toUriString();
         mockMvc.perform(post(url)
                         .content(asJsonString(CommentPostRequestModel.builder()
                                 .content("text")
@@ -70,7 +72,7 @@ class PostController_CommentPostIT {
 
     @Test
     public void givenPostSlugInPathParamDoesNotExist_thenReturnNotFound() throws Exception {
-        String url = UriComponentsBuilder.fromUriString(COMMENT_POST_PATH).buildAndExpand("slugnotexist").toUriString();
+        String url = uriBuilder.buildAndExpand("slugnotexist").toUriString();
         mockMvc.perform(post(url)
                         .content(asJsonString(CommentPostRequestModel.builder()
                                 .content("text")
@@ -84,7 +86,7 @@ class PostController_CommentPostIT {
     @ParameterizedTest
     @MethodSource("provideInvalidCommentPostRequest")
     public void givenInvalidFieldInRequest_shouldReturnUnprocessableEntity(CommentPostValidationRequest request) throws Exception {
-        String url = UriComponentsBuilder.fromUriString(COMMENT_POST_PATH).buildAndExpand("postSlug").toUriString();
+        String url = uriBuilder.buildAndExpand("postSlug").toUriString();
         mockMvc.perform(post(url)
                         .content(asJsonString(request.getRequestDTO()))
                         .contentType(MediaType.APPLICATION_JSON))
@@ -95,9 +97,9 @@ class PostController_CommentPostIT {
     @Test
     @Sql(scripts = "classpath:db-scripts/cleanUp.sql", executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD)
     public void givenUserSlugDoesNotExist_shouldReturnUnprocessableEntity() throws Exception {
-        var userSlug = userAccountService.createUserAccount(new CreateUserAccountRequestDTO("profileName", "username", "email@email", "Strong@Pass123")); //TODO duplicated code
-        var postSlug = postService.createPost(new CreatePostRequestDTO(userSlug, "text"));
-        String url = UriComponentsBuilder.fromUriString(COMMENT_POST_PATH).buildAndExpand(postSlug).toUriString();
+        var userSlug = createValidUserAccount();
+        var postSlug = createValidPost(userSlug);
+        String url = uriBuilder.buildAndExpand(postSlug).toUriString();
         mockMvc.perform(post(url)
                         .content(asJsonString(CommentPostRequestModel.builder()
                                 .content("text")
@@ -111,9 +113,9 @@ class PostController_CommentPostIT {
     @Test
     @Sql(scripts = "classpath:db-scripts/cleanUp.sql", executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD)
     public void givenValidRequest_shouldReturnCreated() throws Exception {
-        var userSlug = userAccountService.createUserAccount(new CreateUserAccountRequestDTO("profileName", "username", "email@email", "Strong@Pass123"));
-        var postSlug = postService.createPost(new CreatePostRequestDTO(userSlug, "text"));
-        String url = UriComponentsBuilder.fromUriString(COMMENT_POST_PATH).buildAndExpand(postSlug).toUriString();
+        var userSlug = createValidUserAccount();
+        var postSlug = createValidPost(userSlug);
+        String url = uriBuilder.buildAndExpand(postSlug).toUriString();
 
         var result = mockMvc.perform(post(url)
                         .content(asJsonString(CommentPostRequestModel.builder()
@@ -141,9 +143,9 @@ class PostController_CommentPostIT {
     @Test
     @Sql(scripts = "classpath:db-scripts/cleanUp.sql", executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD)
     public void givenPostContentHasSpecialCharacters_shouldSaveEscapedVersionOfContent() throws Exception {
-        var userSlug = userAccountService.createUserAccount(new CreateUserAccountRequestDTO("profileName", "username", "email@email", "Strong@Pass123"));
-        var postSlug = postService.createPost(new CreatePostRequestDTO(userSlug, "text"));
-        String url = UriComponentsBuilder.fromUriString(COMMENT_POST_PATH).buildAndExpand(postSlug).toUriString();
+        var userSlug = createValidUserAccount();
+        var postSlug = createValidPost(userSlug);
+        String url = uriBuilder.buildAndExpand(postSlug).toUriString();
         var unescapedText = "<>\"'&\\/<>'\"&=+-()[]{};, \t\n\r\u0000";
         var escapedText = "&lt;&gt;&quot;'&amp;\\/&lt;&gt;'&quot;&amp;=+-()[]{};, \t\n\r";
 
@@ -239,5 +241,13 @@ class PostController_CommentPostIT {
         return entityManager.createQuery("SELECT p FROM Post p WHERE p.slug = :slug", Post.class)
                 .setParameter("slug", slug)
                 .getSingleResult();
+    }
+
+    private String createValidUserAccount() {
+        return userAccountService.createUserAccount(new CreateUserAccountRequestDTO("profileName", "username", "email@email", "Strong@Pass123"));
+    }
+
+    private String createValidPost(String userSlug) {
+        return postService.createPost(new CreatePostRequestDTO(userSlug, "text"));
     }
 }

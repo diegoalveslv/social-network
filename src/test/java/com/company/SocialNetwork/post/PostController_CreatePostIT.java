@@ -75,7 +75,7 @@ class PostController_CreatePostIT {
     @Test
     @Sql(scripts = "classpath:db-scripts/cleanUp.sql", executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD)
     public void givenValidRequest_shouldReturnCreated() throws Exception {
-        var userSlug = userAccountService.createUserAccount(new CreateUserAccountRequestDTO("profileName", "username", "email@email", "Strong@Pass123"));
+        var userSlug = createValidUser();
 
         var result = mockMvc.perform(post(CREATE_POST_PATH)
                         .content(asJsonString(CreatePostRequestModel.builder()
@@ -102,7 +102,7 @@ class PostController_CreatePostIT {
     @Test
     @Sql(scripts = "classpath:db-scripts/cleanUp.sql", executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD)
     public void givenPostContentHasSpecialCharacters_shouldSaveEscapedVersionOfContent() throws Exception {
-        var userSlug = userAccountService.createUserAccount(new CreateUserAccountRequestDTO("profileName", "username", "email@email", "Strong@Pass123"));
+        var userSlug = createValidUser();
         var unescapedText = "<>\"'&\\/<>'\"&=+-()[]{};, \t\n\r\u0000";
         var escapedText = "&lt;&gt;&quot;'&amp;\\/&lt;&gt;'&quot;&amp;=+-()[]{};, \t\n\r";
 
@@ -146,12 +146,6 @@ class PostController_CreatePostIT {
         }
     }
 
-    private Post findPostBySlug(String slug) {
-        return entityManager.createQuery("SELECT p FROM Post p WHERE p.slug = :slug", Post.class)
-                .setParameter("slug", slug)
-                .getSingleResult();
-    }
-
     static Stream<CreatePostValidationRequest> provideInvalidCreatePostRequest() {
         //text
         var nullText = CreatePostRequestModel.builder().content(null).build();
@@ -184,5 +178,15 @@ class PostController_CreatePostIT {
                 , CreatePostValidationRequest.of(notTrimmedUserSlug, "userSlug: must not be blank")
                 , CreatePostValidationRequest.of(notTrimmedUserSlug2, "userSlug: invalid size for trimmed text")
         );
+    }
+
+    private String createValidUser() {
+        return userAccountService.createUserAccount(new CreateUserAccountRequestDTO("profileName", "username", "email@email", "Strong@Pass123"));
+    }
+
+    private Post findPostBySlug(String slug) {
+        return entityManager.createQuery("SELECT p FROM Post p WHERE p.slug = :slug", Post.class)
+                .setParameter("slug", slug)
+                .getSingleResult();
     }
 }
