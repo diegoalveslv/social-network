@@ -1,6 +1,6 @@
 package com.company.SocialNetwork.useraccount;
 
-import com.company.SocialNetwork.TestcontainersConfiguration;
+import com.company.SocialNetwork.TestcontainersConfigurationPostgres;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.NoResultException;
 import org.junit.jupiter.api.Test;
@@ -30,7 +30,7 @@ import static org.testcontainers.shaded.org.apache.commons.lang3.RandomStringUti
 
 @SpringBootTest
 @AutoConfigureMockMvc
-@Import(TestcontainersConfiguration.class)
+@Import(TestcontainersConfigurationPostgres.class)
 public class AccountController_CreateUserAccountIT {
 
     @Autowired

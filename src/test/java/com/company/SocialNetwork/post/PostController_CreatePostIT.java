@@ -1,6 +1,6 @@
 package com.company.SocialNetwork.post;
 
-import com.company.SocialNetwork.TestcontainersConfiguration;
+import com.company.SocialNetwork.TestcontainersConfigurationPostgres;
 import com.company.SocialNetwork.useraccount.CreateUserAccountRequestDTO;
 import com.company.SocialNetwork.useraccount.UserAccountService;
 import jakarta.persistence.EntityManager;
@@ -32,7 +32,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @SpringBootTest
 @AutoConfigureMockMvc
-@Import(TestcontainersConfiguration.class)
+@Import(TestcontainersConfigurationPostgres.class)
 class PostController_CreatePostIT {
 
     @Autowired

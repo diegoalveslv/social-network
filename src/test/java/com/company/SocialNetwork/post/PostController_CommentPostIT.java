@@ -1,6 +1,6 @@
 package com.company.SocialNetwork.post;
 
-import com.company.SocialNetwork.TestcontainersConfiguration;
+import com.company.SocialNetwork.TestcontainersConfigurationPostgres;
 import com.company.SocialNetwork.useraccount.CreateUserAccountRequestDTO;
 import com.company.SocialNetwork.useraccount.UserAccountService;
 import jakarta.persistence.EntityManager;
@@ -32,7 +32,7 @@ import static org.testcontainers.shaded.org.apache.commons.lang3.RandomStringUti
 
 @SpringBootTest
 @AutoConfigureMockMvc
-@Import(TestcontainersConfiguration.class)
+@Import(TestcontainersConfigurationPostgres.class)
 class PostController_CommentPostIT {
 
     private final UriComponentsBuilder uriBuilder = UriComponentsBuilder.fromUriString(COMMENT_POST_PATH);

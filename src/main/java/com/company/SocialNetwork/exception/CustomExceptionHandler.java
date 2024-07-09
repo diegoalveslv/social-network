@@ -45,9 +45,7 @@ public class CustomExceptionHandler {
             messages.add("%s: %s".formatted(fieldName, errorMessage));
         } else if (ex instanceof FieldListValidationException flve) {
             Map<String, String> messageToFieldName = flve.getMessageToFieldName();
-            messageToFieldName.forEach((fieldName, message) -> {
-                messages.add("%s: %s".formatted(fieldName, message));
-            });
+            messageToFieldName.forEach((fieldName, message) -> messages.add("%s: %s".formatted(fieldName, message)));
         } else {
             var invalidExceptionTypeEx = new RuntimeException("Invalid exception type.");
             log.error("Invalid exception type: " + ex.getClass().getName(), invalidExceptionTypeEx);
