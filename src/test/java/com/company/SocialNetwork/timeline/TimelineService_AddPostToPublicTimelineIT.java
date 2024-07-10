@@ -14,8 +14,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.ZSetOperations;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
+import java.time.ZoneId;
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -58,16 +63,18 @@ public class TimelineService_AddPostToPublicTimelineIT {
 
         @Test
         public void givenValidRequest_() {
-            var request = TimelinePostDTO.builder().postSlug("someslug").userSlug("someslug").profileName("profileName").username("username").content("content").postedAt(LocalDateTime.now()).build();
+            var now = ZonedDateTime.now(ZoneId.of("GMT-3"));
+            var request = TimelinePostDTO.builder().postSlug("someslug").userSlug("someslug").profileName("profileName").username("username").content("content").postedAt(now).build();
             timelineService.addPostToPublicTimeline(request);
 
             TimelinePostDTO resultPost = shouldAddPostToCache();
             assertThat(resultPost).isEqualTo(request);
+            shouldUseUTCTime(resultPost, now);
         }
 
         @Test
         public void givenMultipleRequestsInTheSameInstant_() {
-            var now = LocalDateTime.now();
+            var now = ZonedDateTime.now();
             var request = TimelinePostDTO.builder().postSlug("someslug").userSlug("someslug").profileName("profileName").username("username").content("content").postedAt(now).build();
             var request2 = request.toBuilder().postSlug("anotherSlug").build();
 
@@ -77,6 +84,18 @@ public class TimelineService_AddPostToPublicTimelineIT {
             Set<TimelinePostDTO> posts = shouldAddMultiplePostsToCache();
             assertThat(posts).hasSize(2);
             assertThat(posts).containsExactlyInAnyOrder(request, request2);
+        }
+
+        private void shouldUseUTCTime(TimelinePostDTO resultPost, ZonedDateTime postedAt) {
+            var postedAtUtcInstant = postedAt.withZoneSameInstant(ZoneOffset.UTC).toInstant();
+            assertThat(resultPost.getPostedAt().toInstant()).isEqualTo(postedAtUtcInstant);
+
+            Set<ZSetOperations.TypedTuple<String>> typedTuples = redisTemplate.opsForZSet().rangeWithScores(PUBLIC_TIMELINE_KEY, 0, 1);
+            typedTuples.forEach(tuple -> {
+                long epochMilli = tuple.getScore().longValue();
+                var instant = Instant.ofEpochMilli(epochMilli);
+                assertThat(instant).isEqualTo(postedAtUtcInstant.truncatedTo(ChronoUnit.MILLIS));
+            });
         }
 
         private Set<TimelinePostDTO> shouldAddMultiplePostsToCache() {

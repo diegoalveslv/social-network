@@ -25,18 +25,18 @@ class SlugGeneratorTest {
         String[] slugs = new String[1000];
 
         CountDownLatch latch = new CountDownLatch(1000);
-        try (ExecutorService executorService = Executors.newFixedThreadPool(10)) {
-            for (int i = 0; i < 1000; i++) {
-                int finalI = i;
-                executorService.submit(() -> {
-                    try {
-                        String slug = slugGenerator.generateSlug();
-                        slugs[finalI] = slug;
-                    } finally {
-                        latch.countDown();
-                    }
-                });
-            }
+        ExecutorService executorService = Executors.newFixedThreadPool(10);
+
+        for (int i = 0; i < 1000; i++) {
+            int finalI = i;
+            executorService.submit(() -> {
+                try {
+                    String slug = slugGenerator.generateSlug();
+                    slugs[finalI] = slug;
+                } finally {
+                    latch.countDown();
+                }
+            });
         }
 
         latch.await();

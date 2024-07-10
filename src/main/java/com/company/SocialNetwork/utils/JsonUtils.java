@@ -1,6 +1,7 @@
 package com.company.SocialNetwork.utils;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.MapperFeature;
@@ -40,6 +41,14 @@ public class JsonUtils {
     }
 
     public static <T> T readValue(String contentAsString, Class<T> type) {
+        try {
+            return defaultMapper.readValue(contentAsString, type);
+        } catch (JsonProcessingException e) {
+            throw new RuntimeJsonProcessingJson(e);
+        }
+    }
+
+    public static <T> T readValue(String contentAsString, TypeReference<T> type) {
         try {
             return defaultMapper.readValue(contentAsString, type);
         } catch (JsonProcessingException e) {
