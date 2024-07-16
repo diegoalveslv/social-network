@@ -1,10 +1,15 @@
 package com.company.SocialNetwork.post;
 
 import com.company.SocialNetwork.TestcontainersConfigurationPostgres;
+import com.company.SocialNetwork.TestcontainersConfigurationRedis;
+import com.company.SocialNetwork.shared.PublicTimelineResponseDTO;
+import com.company.SocialNetwork.timeline.TimelinePostDTO;
+import com.company.SocialNetwork.timeline.TimelineService;
 import com.company.SocialNetwork.useraccount.CreateUserAccountRequestDTO;
 import com.company.SocialNetwork.useraccount.UserAccountService;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.NoResultException;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
@@ -13,10 +18,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Import;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.web.servlet.MockMvc;
 
+import java.util.Set;
 import java.util.stream.Stream;
 
 import static com.company.SocialNetwork.TestUtils.getSlugFromLocation;
@@ -32,7 +39,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @SpringBootTest
 @AutoConfigureMockMvc
-@Import(TestcontainersConfigurationPostgres.class)
+@Import({TestcontainersConfigurationPostgres.class, TestcontainersConfigurationRedis.class})
 class PostController_CreatePostIT {
 
     @Autowired
@@ -42,12 +49,23 @@ class PostController_CreatePostIT {
     private EntityManager entityManager;
 
     @Autowired
+    private RedisTemplate<String, String> redisTemplate;
+
+    @Autowired
     private UserAccountService userAccountService;
+
+    @Autowired
+    private TimelineService timelineService;
 
     @Test
     public void givenBodyIsEmpty_shouldReturnBadRequest() throws Exception {
         mockMvc.perform(post(CREATE_POST_PATH))
                 .andExpect(status().isBadRequest());
+    }
+
+    @BeforeEach
+    public void tearDown() {
+        redisTemplate.getConnectionFactory().getConnection().serverCommands().flushAll();
     }
 
     @ParameterizedTest
@@ -97,8 +115,9 @@ class PostController_CreatePostIT {
         shouldExistInDatabase(slug);
 
         var post = findPostBySlug(slug);
-        shouldHaveSetCreatedDate(post);
-        shouldHaveTrimmedContent(post, content);
+        shouldSetCreatedDate(post);
+        shouldTrimmedContent(post, content);
+        shouldAddPostToPublicTimeline(post);
     }
 
     @Test
@@ -127,19 +146,31 @@ class PostController_CreatePostIT {
         shouldExistInDatabase(slug);
 
         var post = findPostBySlug(slug);
-        shouldHaveSetCreatedDate(post);
-        shouldHaveContentEqualTo(post, escapedText);
+        shouldSetCreatedDate(post);
+        shouldContentEqualTo(post, escapedText);
     }
 
-    private void shouldHaveTrimmedContent(Post post, String notTrimmedContent) {
+    private void shouldAddPostToPublicTimeline(Post originalPost) {
+        PublicTimelineResponseDTO timeline = timelineService.readPublicTimeline(null);
+        Set<TimelinePostDTO> content = timeline.getContent();
+        assertThat(content).hasSize(1);
+        TimelinePostDTO timelinePost = content.iterator().next();
+        assertThat(timelinePost.getContent()).isEqualTo(originalPost.getContent());
+        assertThat(timelinePost.getUsername()).isEqualTo(originalPost.getUserAccount().getUsername());
+        assertThat(timelinePost.getPostSlug()).isEqualTo(originalPost.getSlug());
+        assertThat(timelinePost.getProfileName()).isEqualTo(originalPost.getUserAccount().getProfileName());
+        assertThat(timelinePost.getPostedAt().toInstant().toEpochMilli()).isEqualTo(originalPost.getCreatedAt().toInstant().toEpochMilli());
+    }
+
+    private void shouldTrimmedContent(Post post, String notTrimmedContent) {
         assertThat(post.getContent()).isEqualTo(notTrimmedContent.trim());
     }
 
-    private void shouldHaveContentEqualTo(Post post, String specialCharacters) {
+    private void shouldContentEqualTo(Post post, String specialCharacters) {
         assertThat(post.getContent()).isEqualTo(specialCharacters);
     }
 
-    private void shouldHaveSetCreatedDate(Post post) {
+    private void shouldSetCreatedDate(Post post) {
         assertThat(post.getCreatedAt()).isNotNull();
     }
 

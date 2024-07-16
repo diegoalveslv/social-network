@@ -37,12 +37,11 @@ public class TimelineService {
         log.info("Post added to public timeline: {}", timelinePost);
     }
 
-    public PublicTimelineResponseDTO<TimelinePostDTO> readPublicTimeline(Double nextScore) throws FieldValidationException {
-
+    public PublicTimelineResponseDTO readPublicTimeline(Double nextScore) throws FieldValidationException {
         Set<ZSetOperations.TypedTuple<String>> reverseRange = getLatestPosts(nextScore);
 
         if (reverseRange == null) {
-            return new PublicTimelineResponseDTO<>();
+            return new PublicTimelineResponseDTO();
         }
 
         LinkedHashSet<TimelinePostDTO> timelinePosts = reverseRange.stream()
@@ -54,12 +53,11 @@ public class TimelineService {
         String totalItems = getTotalItemsString();
         Double newNextScore = getNextScoreFromRangeIfPossible(reverseRange);
 
-        var response = new PublicTimelineResponseDTO<TimelinePostDTO>();
-        response.setContent(timelinePosts);
-        response.setTotalItems(totalItems);
-        response.setNextScore(newNextScore);
-
-        return response;
+        return PublicTimelineResponseDTO.builder()
+                .content(timelinePosts)
+                .totalItems(totalItems)
+                .nextScore(newNextScore)
+                .build();
     }
 
     public double getPostScore(TimelinePostDTO timelinePost) {

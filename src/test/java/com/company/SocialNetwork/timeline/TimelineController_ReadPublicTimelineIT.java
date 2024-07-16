@@ -156,7 +156,7 @@ public class TimelineController_ReadPublicTimelineIT {
                     .andExpect(jsonPath("$.content.length()").value(10))
                     .andExpect(jsonPath("$.nextScore").isNotEmpty())
                     .andReturn();
-            PublicTimelineResponseDTO<TimelinePostDTO> response = JsonUtils.readValue(mvcResult.getResponse().getContentAsString(), new TypeReference<>() {
+            PublicTimelineResponseDTO response = JsonUtils.readValue(mvcResult.getResponse().getContentAsString(), new TypeReference<>() {
             });
             Double nextScore = response.getNextScore();
 

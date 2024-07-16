@@ -3,9 +3,11 @@ package com.company.SocialNetwork.post;
 import com.company.SocialNetwork.exception.FieldValidationException;
 import com.company.SocialNetwork.exception.NotFoundException;
 import com.company.SocialNetwork.shared.validation.SizeTrimmed;
+import com.company.SocialNetwork.timeline.TimelineService;
 import com.company.SocialNetwork.useraccount.UserAccount;
 import com.company.SocialNetwork.useraccount.UserAccountRepository;
 import com.company.SocialNetwork.utils.SlugGenerator;
+import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
@@ -26,7 +28,10 @@ public class PostService {
     private final PostRepository postRepository;
     private final UserAccountRepository userAccountRepository;
     private final SlugGenerator slugGenerator;
+    private final TimelineService timelineService;
+    private final PostMapper postMapper;
 
+    @Transactional
     public String createPost(@Valid CreatePostRequestDTO requestData) {
         var userSlug = requestData.getUserSlug();
         var user = getUserOrThrowException(userSlug, CreatePostRequestDTO.Fields.userSlug);
@@ -39,10 +44,14 @@ public class PostService {
                 .createdAt(ZonedDateTime.now())
                 .build();
 
-        Post savedPost = postRepository.save(post);
+        var savedPost = postRepository.save(post);
+        var timelinePostDTO = postMapper.toTimelinePostDTO(post);
+        timelineService.addPostToPublicTimeline(timelinePostDTO);
+
         return savedPost.getSlug();
     }
 
+    @Transactional
     public String commentPost(@Valid @NotBlank @Size(min = 12, max = 12) @SizeTrimmed(min = 12, max = 12) String postSlug //TODO ugly
             , @Valid CommentPostRequestDTO requestData) {
         var postCommentedOn = getPostOrThrowNotFound(postSlug);
