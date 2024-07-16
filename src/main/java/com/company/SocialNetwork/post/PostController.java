@@ -1,5 +1,10 @@
 package com.company.SocialNetwork.post;
 
+import com.company.SocialNetwork.utils.HttpStatusCodes;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -12,6 +17,7 @@ import java.net.URI;
 
 @RestController
 @RequiredArgsConstructor
+@Tag(name = "Post")
 public class PostController {
 
     public static final String CREATE_POST_PATH = "/posts";
@@ -19,6 +25,10 @@ public class PostController {
 
     private final PostService postService;
 
+    @Operation(summary = "Create a post", operationId = "createPost")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = HttpStatusCodes.CREATED, description = "CREATED"),
+    })
     @PostMapping(CREATE_POST_PATH)
     public ResponseEntity<?> createPost(@RequestBody CreatePostRequestDTO requestData) {
 
@@ -33,6 +43,10 @@ public class PostController {
         return ResponseEntity.created(location).build();
     }
 
+    @Operation(summary = "Comment a post", operationId = "commentPost")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = HttpStatusCodes.CREATED, description = "CREATED")
+    })
     @PostMapping(COMMENT_POST_PATH)
     public ResponseEntity<?> commentPost(@PathVariable String postSlug, @RequestBody CommentPostRequestDTO requestData) {
 

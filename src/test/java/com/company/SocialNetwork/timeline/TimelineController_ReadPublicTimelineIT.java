@@ -2,7 +2,7 @@ package com.company.SocialNetwork.timeline;
 
 import com.company.SocialNetwork.TestcontainersConfigurationPostgres;
 import com.company.SocialNetwork.TestcontainersConfigurationRedis;
-import com.company.SocialNetwork.shared.CachePage;
+import com.company.SocialNetwork.shared.PublicTimelineResponseDTO;
 import com.company.SocialNetwork.utils.JsonUtils;
 import com.fasterxml.jackson.core.type.TypeReference;
 import org.junit.jupiter.api.BeforeEach;
@@ -156,7 +156,7 @@ public class TimelineController_ReadPublicTimelineIT {
                     .andExpect(jsonPath("$.content.length()").value(10))
                     .andExpect(jsonPath("$.nextScore").isNotEmpty())
                     .andReturn();
-            CachePage<TimelinePostDTO> response = JsonUtils.readValue(mvcResult.getResponse().getContentAsString(), new TypeReference<>() {
+            PublicTimelineResponseDTO<TimelinePostDTO> response = JsonUtils.readValue(mvcResult.getResponse().getContentAsString(), new TypeReference<>() {
             });
             Double nextScore = response.getNextScore();
 

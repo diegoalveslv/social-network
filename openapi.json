@@ -1,0 +1,367 @@
+{
+  "openapi": "3.0.1",
+  "info": {
+    "title": "OpenAPI definition",
+    "version": "v0"
+  },
+  "servers": [
+    {
+      "url": "http://localhost:8080",
+      "description": "Generated server url"
+    }
+  ],
+  "paths": {
+    "/users": {
+      "post": {
+        "tags": [
+          "User Account"
+        ],
+        "summary": "Create user account",
+        "operationId": "createUserAccount",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateUserAccountRequestDTO"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "422": {
+            "description": "Unprocessable Entity",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/CustomErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "CREATED"
+          }
+        }
+      }
+    },
+    "/posts": {
+      "post": {
+        "tags": [
+          "Post"
+        ],
+        "summary": "Create a post",
+        "operationId": "createPost",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreatePostRequestDTO"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "422": {
+            "description": "Unprocessable Entity",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/CustomErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "CREATED",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/posts/{postSlug}/comment": {
+      "post": {
+        "tags": [
+          "Post"
+        ],
+        "summary": "Comment a post",
+        "operationId": "commentPost",
+        "parameters": [
+          {
+            "name": "postSlug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CommentPostRequestDTO"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "422": {
+            "description": "Unprocessable Entity",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/CustomErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "CREATED",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/timeline": {
+      "get": {
+        "tags": [
+          "Timeline"
+        ],
+        "summary": "Read public timeline",
+        "operationId": "readPublicTimeline",
+        "parameters": [
+          {
+            "name": "nextScore",
+            "in": "query",
+            "description": "Next score to start reading timeline",
+            "required": false,
+            "schema": {
+              "type": "number",
+              "format": "double"
+            }
+          }
+        ],
+        "responses": {
+          "422": {
+            "description": "Unprocessable Entity",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/CustomErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicTimelineResponseDTO"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "CustomErrorResponse": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "messages": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "CreateUserAccountRequestDTO": {
+        "required": [
+          "email",
+          "password",
+          "profileName",
+          "username"
+        ],
+        "type": "object",
+        "properties": {
+          "profileName": {
+            "maxLength": 40,
+            "minLength": 2,
+            "type": "string"
+          },
+          "username": {
+            "maxLength": 40,
+            "minLength": 3,
+            "type": "string"
+          },
+          "email": {
+            "maxLength": 255,
+            "minLength": 5,
+            "type": "string"
+          },
+          "password": {
+            "maxLength": 60,
+            "minLength": 8,
+            "type": "string"
+          }
+        }
+      },
+      "CreatePostRequestDTO": {
+        "required": [
+          "content",
+          "userSlug"
+        ],
+        "type": "object",
+        "properties": {
+          "userSlug": {
+            "maxLength": 12,
+            "minLength": 12,
+            "type": "string"
+          },
+          "content": {
+            "maxLength": 500,
+            "minLength": 2,
+            "type": "string"
+          }
+        }
+      },
+      "CommentPostRequestDTO": {
+        "required": [
+          "content",
+          "userSlug"
+        ],
+        "type": "object",
+        "properties": {
+          "userSlug": {
+            "maxLength": 12,
+            "minLength": 12,
+            "type": "string"
+          },
+          "content": {
+            "maxLength": 500,
+            "minLength": 2,
+            "type": "string"
+          }
+        }
+      },
+      "PublicTimelineResponseDTO": {
+        "type": "object",
+        "properties": {
+          "content": {
+            "uniqueItems": true,
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TimelinePostDTO"
+            }
+          },
+          "totalItems": {
+            "type": "string"
+          },
+          "nextScore": {
+            "type": "number",
+            "format": "double"
+          }
+        }
+      },
+      "TimelinePostDTO": {
+        "required": [
+          "content",
+          "postSlug",
+          "postedAt",
+          "profileName",
+          "userSlug",
+          "username"
+        ],
+        "type": "object",
+        "properties": {
+          "postSlug": {
+            "type": "string"
+          },
+          "userSlug": {
+            "type": "string"
+          },
+          "username": {
+            "type": "string"
+          },
+          "profileName": {
+            "type": "string"
+          },
+          "content": {
+            "type": "string"
+          },
+          "postedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      }
+    }
+  }
+}

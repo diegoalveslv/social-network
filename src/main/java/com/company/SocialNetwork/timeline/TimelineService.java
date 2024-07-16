@@ -1,7 +1,7 @@
 package com.company.SocialNetwork.timeline;
 
 import com.company.SocialNetwork.exception.FieldValidationException;
-import com.company.SocialNetwork.shared.CachePage;
+import com.company.SocialNetwork.shared.PublicTimelineResponseDTO;
 import com.company.SocialNetwork.utils.JsonUtils;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -37,12 +37,12 @@ public class TimelineService {
         log.info("Post added to public timeline: {}", timelinePost);
     }
 
-    public CachePage<TimelinePostDTO> readPublicTimeline(Double nextScore) throws FieldValidationException {
+    public PublicTimelineResponseDTO<TimelinePostDTO> readPublicTimeline(Double nextScore) throws FieldValidationException {
 
         Set<ZSetOperations.TypedTuple<String>> reverseRange = getLatestPosts(nextScore);
 
         if (reverseRange == null) {
-            return new CachePage<>();
+            return new PublicTimelineResponseDTO<>();
         }
 
         LinkedHashSet<TimelinePostDTO> timelinePosts = reverseRange.stream()
@@ -54,7 +54,7 @@ public class TimelineService {
         String totalItems = getTotalItemsString();
         Double newNextScore = getNextScoreFromRangeIfPossible(reverseRange);
 
-        var response = new CachePage<TimelinePostDTO>();
+        var response = new PublicTimelineResponseDTO<TimelinePostDTO>();
         response.setContent(timelinePosts);
         response.setTotalItems(totalItems);
         response.setNextScore(newNextScore);

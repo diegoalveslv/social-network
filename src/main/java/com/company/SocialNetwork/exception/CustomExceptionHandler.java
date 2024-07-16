@@ -6,6 +6,7 @@ import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.ResponseStatus;
 
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
@@ -23,6 +24,7 @@ public class CustomExceptionHandler {
             , jakarta.validation.ConstraintViolationException.class
             , FieldValidationException.class
             , FieldListValidationException.class})
+    @ResponseStatus(code = UNPROCESSABLE_ENTITY)
     public ResponseEntity<CustomErrorResponse> handleValidationExceptions(Exception ex) {
 
         List<String> messages = new ArrayList<>();
@@ -58,6 +60,7 @@ public class CustomExceptionHandler {
     }
 
     @ExceptionHandler({NotFoundException.class})
+    @ResponseStatus(code = NOT_FOUND)
     public ResponseEntity<?> handleNotFoundException(NotFoundException ex) {
         return new ResponseEntity<>(new CustomErrorResponse(NOT_FOUND.value(), ZonedDateTime.now(), List.of(ex.getMessage())), NOT_FOUND);
     }
