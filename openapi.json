@@ -325,8 +325,7 @@
             "type": "string"
           },
           "nextScore": {
-            "type": "number",
-            "format": "double"
+            "type": "string"
           }
         }
       },

@@ -15,7 +15,11 @@ import java.util.Set;
 @Builder
 public class PublicTimelineResponseDTO {
 
+    @Builder.Default
     private Set<TimelinePostDTO> content = new HashSet<>();
+
+    @Builder.Default
     private String totalItems = "*";
-    private Double nextScore;
+
+    private String nextScore;
 }

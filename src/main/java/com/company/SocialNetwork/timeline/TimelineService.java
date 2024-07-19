@@ -15,6 +15,7 @@ import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.LinkedHashSet;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -37,8 +38,9 @@ public class TimelineService {
         log.info("Post added to public timeline: {}", timelinePost);
     }
 
-    public PublicTimelineResponseDTO readPublicTimeline(Double nextScore) throws FieldValidationException {
-        Set<ZSetOperations.TypedTuple<String>> reverseRange = getLatestPosts(nextScore);
+    public PublicTimelineResponseDTO readPublicTimeline(String nextScore) throws FieldValidationException {
+        Optional<Double> nextScoreDouble = convertNextScoreToDoubleValue(nextScore);
+        Set<ZSetOperations.TypedTuple<String>> reverseRange = getLatestPosts(nextScoreDouble);
 
         if (reverseRange == null) {
             return new PublicTimelineResponseDTO();
@@ -56,7 +58,7 @@ public class TimelineService {
         return PublicTimelineResponseDTO.builder()
                 .content(timelinePosts)
                 .totalItems(totalItems)
-                .nextScore(newNextScore)
+                .nextScore(newNextScore != null ? String.valueOf(newNextScore) : null)
                 .build();
     }
 
@@ -64,22 +66,23 @@ public class TimelineService {
         return (double) timelinePost.getPostedAt().toInstant().toEpochMilli();
     }
 
-    private Set<ZSetOperations.TypedTuple<String>> getLatestPosts(Double nextScore) {
+    private Set<ZSetOperations.TypedTuple<String>> getLatestPosts(Optional<Double> nextScore) {
 
         Set<ZSetOperations.TypedTuple<String>> reverseRange;
         long nowInMilli = ZonedDateTime.now(ZoneOffset.UTC).toInstant().toEpochMilli();
-        if (nextScore == null) {
+        if (nextScore.isEmpty()) {
             reverseRange = redisTemplate.opsForZSet().reverseRangeByScoreWithScores(PUBLIC_TIMELINE_KEY, 0, nowInMilli, 0, MAX_PAGE_SIZE + 1);
         } else {
-            if (nextScore.longValue() > nowInMilli) {
+            Double nextScoreValue = nextScore.get();
+            if (nextScoreValue.longValue() > nowInMilli) {
                 throw new FieldValidationException("nextScore", "invalid value. Please request without it to get the latest scores.");
             }
 
-            if (nextScore.longValue() <= 0) {
+            if (nextScoreValue.longValue() <= 0) {
                 throw new FieldValidationException("nextScore", "value should be greater than zero. Please request without it to get the latest scores.");
             }
 
-            reverseRange = redisTemplate.opsForZSet().reverseRangeByScoreWithScores(PUBLIC_TIMELINE_KEY, 0, nextScore, 0, MAX_PAGE_SIZE + 1);
+            reverseRange = redisTemplate.opsForZSet().reverseRangeByScoreWithScores(PUBLIC_TIMELINE_KEY, 0, nextScoreValue, 0, MAX_PAGE_SIZE + 1);
         }
 
         return reverseRange;
@@ -97,5 +100,18 @@ public class TimelineService {
     private String getTotalItemsString() {
         Long totalItems = redisTemplate.opsForZSet().zCard(PUBLIC_TIMELINE_KEY);
         return totalItems != null ? String.valueOf(totalItems) : "*";
+    }
+
+    private static Optional<Double> convertNextScoreToDoubleValue(String nextScore) {
+        Double nextScoreDouble = null;
+        if (nextScore != null) {
+            try {
+                nextScoreDouble = Double.parseDouble(nextScore);
+            } catch (Exception e) {
+                log.error("Unable to convert score `%s` to double".formatted(nextScore), e);
+                throw new FieldValidationException("nextScore", "invalid value. Cannot be converted to double.");
+            }
+        }
+        return Optional.ofNullable(nextScoreDouble);
     }
 }

@@ -30,7 +30,7 @@ public class TimelineController {
                     content = @Content(schema = @Schema(implementation = PublicTimelineResponseDTO.class))),
     })
     @GetMapping(READ_TIMELINE_PATH)
-    public ResponseEntity<?> readPublicTimeline(@Parameter(description = "Next score to start reading timeline") @RequestParam(required = false) Double nextScore) {
+    public ResponseEntity<?> readPublicTimeline(@Parameter(description = "Next score to start reading timeline from") @RequestParam(required = false) String nextScore) {
         return ResponseEntity.ok(timelineService.readPublicTimeline(nextScore));
     }
 }

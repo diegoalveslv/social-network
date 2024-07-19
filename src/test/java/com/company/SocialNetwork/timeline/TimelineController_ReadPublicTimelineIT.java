@@ -30,6 +30,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @AutoConfigureMockMvc
 @Import({TestcontainersConfigurationRedis.class, TestcontainersConfigurationPostgres.class})
 //TODO postgres is not needed here but I added it to be able to load the context. Fix this
+//TODO version the APIs
 public class TimelineController_ReadPublicTimelineIT {
 
     @Autowired
@@ -158,7 +159,7 @@ public class TimelineController_ReadPublicTimelineIT {
                     .andReturn();
             PublicTimelineResponseDTO response = JsonUtils.readValue(mvcResult.getResponse().getContentAsString(), new TypeReference<>() {
             });
-            Double nextScore = response.getNextScore();
+            String nextScore = response.getNextScore();
 
             var oldestPost = allPosts.get(11);
             var postAfterOldestPost = allPosts.get(10);
