@@ -26,7 +26,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static com.company.SocialNetwork.timeline.TimelineService.PUBLIC_TIMELINE_KEY;
+import static com.company.SocialNetwork.timeline.TimelineRedisRepository.PUBLIC_TIMELINE_KEY;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.catchThrowableOfType;
 
