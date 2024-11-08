@@ -9,4 +9,6 @@ public interface TimelineRepository {
     String getTotalItemsString();
 
     void addPostToPublicTimeline(TimelinePostDTO timelinePost);
+
+    Long countNewPosts(Double startingFromScore);
 }
